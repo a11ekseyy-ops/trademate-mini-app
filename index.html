@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -473,10 +473,9 @@
     <div id="syncIndicator" class="sync-indicator">🔄 Синхронизация...</div>
 
     <script>
-        // Конфигурация - используем абсолютный URL для Replit
-        const SERVER_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:8000' 
-            : `https://${window.location.hostname.replace('mini-app-', 'server-')}.repl.co`;
+        // КОНФИГУРАЦИЯ - ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ URL СЕРВЕРА
+        // Получите URL из адресной строки серверного Replit и вставьте сюда
+        const SERVER_URL = 'https://trademate-server.yourusername.repl.co'; // ЗАМЕНИТЕ yourusername на ваш username
         
         const FALLBACK_STORAGE_KEY = 'trademate_contests_fallback';
         
@@ -521,13 +520,12 @@
                 const config = {
                     headers: {
                         'Content-Type': 'application/json',
-                        ...options.headers
                     },
                     ...options
                 };
                 
                 if (options.body) {
-                    config.body = options.body;
+                    config.body = JSON.stringify(options.body);
                 }
                 
                 const response = await fetch(url, config);
@@ -627,10 +625,7 @@
             try {
                 const response = await apiRequest('/contests', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(contestData)
+                    body: contestData
                 });
                 
                 return response;
@@ -644,10 +639,7 @@
             try {
                 await apiRequest(`/contests/${contestId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(updateData)
+                    body: updateData
                 });
             } catch (error) {
                 console.error('Failed to update contest:', error);
