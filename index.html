@@ -429,7 +429,6 @@
         let tg = window.Telegram.WebApp;
         let user = null;
         let contests = [];
-        let userParticipations = [];
 
         // Инициализация
         tg.expand();
@@ -450,34 +449,46 @@
         loadContests();
 
         // Ключ для хранения конкурсов в localStorage
-        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests_v2';
+        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests';
 
         // Загружаем конкурсы из localStorage
         function loadContestsFromStorage() {
-            const savedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
-            if (savedContests) {
-                const parsedContests = JSON.parse(savedContests);
-                
-                // Обновляем даты из строк в объекты Date
-                contests = parsedContests.map(contest => ({
-                    ...contest,
-                    endDate: new Date(contest.endDate),
-                    createdAt: new Date(contest.createdAt)
-                }));
-            } else {
-                // Создаем тестовые конкурсы только если нет сохраненных
+            try {
+                const savedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
+                if (savedContests) {
+                    const parsedContests = JSON.parse(savedContests);
+                    
+                    // Обновляем даты из строк в объекты Date
+                    contests = parsedContests.map(contest => ({
+                        ...contest,
+                        endDate: new Date(contest.endDate),
+                        createdAt: new Date(contest.createdAt)
+                    }));
+                } else {
+                    // Создаем тестовые конкурсы только если нет сохраненных
+                    initializeSampleContests();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки конкурсов:', error);
                 initializeSampleContests();
             }
         }
 
         // Сохраняем конкурсы в localStorage
         function saveContestsToStorage() {
-            const contestsToSave = contests.map(contest => ({
-                ...contest,
-                endDate: contest.endDate.toISOString(),
-                createdAt: contest.createdAt.toISOString()
-            }));
-            localStorage.setItem(CONTESTS_STORAGE_KEY, JSON.stringify(contestsToSave));
+            try {
+                const contestsToSave = contests.map(contest => ({
+                    ...contest,
+                    endDate: contest.endDate.toISOString(),
+                    createdAt: contest.createdAt.toISOString()
+                }));
+                localStorage.setItem(CONTESTS_STORAGE_KEY, JSON.stringify(contestsToSave));
+                
+                // Триггерим событие для синхронизации между вкладками
+                window.dispatchEvent(new Event('storage'));
+            } catch (error) {
+                console.error('Ошибка сохранения конкурсов:', error);
+            }
         }
 
         // Инициализация примерных конкурсов
@@ -515,47 +526,6 @@
             saveContestsToStorage();
         }
 
-        // Функция для синхронизации данных между вкладками
-        function syncContests() {
-            // Слушаем изменения в localStorage
-            window.addEventListener('storage', function(e) {
-                if (e.key === CONTESTS_STORAGE_KEY) {
-                    loadContestsFromStorage();
-                    refreshAllDisplays();
-                }
-            });
-
-            // Также периодически проверяем изменения
-            setInterval(() => {
-                const currentSaved = localStorage.getItem(CONTESTS_STORAGE_KEY);
-                if (currentSaved) {
-                    const currentContests = JSON.stringify(contests.map(c => ({
-                        ...c,
-                        endDate: c.endDate.toISOString(),
-                        createdAt: c.createdAt.toISOString()
-                    })));
-                    
-                    if (currentSaved !== currentContests) {
-                        loadContestsFromStorage();
-                        refreshAllDisplays();
-                    }
-                }
-            }, 1000);
-        }
-
-        // Обновляем все отображения
-        function refreshAllDisplays() {
-            if (document.getElementById('contests').classList.contains('active')) {
-                displayContests();
-            }
-            if (document.getElementById('my-contests').classList.contains('active')) {
-                loadMyContests();
-            }
-            if (document.getElementById('admin').classList.contains('active')) {
-                loadAdminContests();
-            }
-        }
-
         function loadContests() {
             document.getElementById('contestsList').innerHTML = `
                 <div class="loading">
@@ -565,8 +535,20 @@
             `;
 
             loadContestsFromStorage();
-            syncContests(); // Запускаем синхронизацию
             
+            // Слушаем изменения в localStorage от других вкладок
+            window.addEventListener('storage', function(e) {
+                if (e.key === CONTESTS_STORAGE_KEY) {
+                    loadContestsFromStorage();
+                    refreshAllDisplays();
+                }
+            });
+
+            // Периодически обновляем данные
+            setInterval(() => {
+                refreshAllDisplays();
+            }, 2000);
+
             setTimeout(() => {
                 displayContests();
             }, 500);
@@ -773,6 +755,20 @@
                 loadMyContests();
             } else if (sectionId === 'admin') {
                 loadAdminContests();
+            } else if (sectionId === 'contests') {
+                displayContests();
+            }
+        }
+
+        function refreshAllDisplays() {
+            if (document.getElementById('contests').classList.contains('active')) {
+                displayContests();
+            }
+            if (document.getElementById('my-contests').classList.contains('active')) {
+                loadMyContests();
+            }
+            if (document.getElementById('admin').classList.contains('active')) {
+                loadAdminContests();
             }
         }
 
@@ -873,7 +869,7 @@
                         </button>
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="admin-btn" style="flex: 1; padding: 8px; background: ${isActive ? '#f44336' : '#9E9E9E'};" onclick="${isActive ? `endContest('${contest.id}')` : ''}" ${!isActive ? 'disabled' : ''}>
+                        <button class="admin-btn" style="flex: 1; padding: 8px; background: ${isActive ? '#f44336' : '#9E9E9E'};" onclick="endContest('${contest.id}')" ${!isActive ? 'disabled' : ''}>
                             ${isActive ? '❌ Завершить' : '🔴 Завершен'}
                         </button>
                         <button class="admin-btn delete" style="flex: 1; padding: 8px;" onclick="deleteContest('${contest.id}')">
@@ -905,7 +901,6 @@
                 return;
             }
 
-            // В реальном приложении здесь будет логика выбора победителей
             showNotification('🎲 Победители выбраны случайным образом!');
         }
 
