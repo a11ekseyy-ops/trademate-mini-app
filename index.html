@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -473,9 +473,8 @@
     <div id="syncIndicator" class="sync-indicator">🔄 Синхронизация...</div>
 
     <script>
-        // КОНФИГУРАЦИЯ - ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ URL СЕРВЕРА
-        // Получите URL из адресной строки серверного Replit и вставьте сюда
-        const SERVER_URL = 'ngrok config add-authtoken 35trLQUYw2VFGqbqqTDDjxtOv8A_2mjdauxgMd2sayPV3CVUZ'; // ЗАМЕНИТЕ yourusername на ваш username
+        // 🔧 ЗАМЕНИТЕ НА ВАШ NGROK URL
+        const SERVER_URL = 'https://subnerged-ludicrous-sabrina.ngrok-free.dev/';
         
         const FALLBACK_STORAGE_KEY = 'trademate_contests_fallback';
         
@@ -483,7 +482,7 @@
         let user = null;
         let contests = [];
         let isAdmin = false;
-        const UPDATE_INTERVAL = 10000; // 10 секунд
+        const UPDATE_INTERVAL = 30000; // 30 секунд
 
         // Инициализация
         tg.expand();
@@ -518,8 +517,10 @@
                 showSyncIndicator();
                 
                 const config = {
+                    method: options.method || 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        ...options.headers
                     },
                     ...options
                 };
@@ -528,6 +529,7 @@
                     config.body = JSON.stringify(options.body);
                 }
                 
+                console.log(`Making request to: ${url}`);
                 const response = await fetch(url, config);
                 
                 if (!response.ok) {
@@ -554,23 +556,31 @@
         }
 
         function getFromFallbackStorage(endpoint) {
-            const fallbackData = localStorage.getItem(FALLBACK_STORAGE_KEY);
-            if (!fallbackData) return null;
-            
-            const data = JSON.parse(fallbackData);
-            
-            switch(endpoint) {
-                case '/contests':
-                    return { contests: data.filter(c => c.isActive && new Date(c.endDate) > new Date()) };
-                case '/contests/all':
-                    return { contests: data };
-                default:
-                    return null;
+            try {
+                const fallbackData = localStorage.getItem(FALLBACK_STORAGE_KEY);
+                if (!fallbackData) return null;
+                
+                const data = JSON.parse(fallbackData);
+                
+                switch(endpoint) {
+                    case '/contests':
+                        return { contests: data.filter(c => c.isActive && new Date(c.endDate) > new Date()) };
+                    case '/contests/all':
+                        return { contests: data };
+                    default:
+                        return null;
+                }
+            } catch (e) {
+                return null;
             }
         }
 
         function saveToFallbackStorage(contestsData) {
-            localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(contestsData));
+            try {
+                localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(contestsData));
+            } catch (e) {
+                console.error('Failed to save to fallback storage:', e);
+            }
         }
 
         async function loadContests() {
@@ -637,10 +647,11 @@
 
         async function updateContestOnServer(contestId, updateData) {
             try {
-                await apiRequest(`/contests/${contestId}`, {
+                const response = await apiRequest(`/contests/${contestId}`, {
                     method: 'PUT',
                     body: updateData
                 });
+                return response;
             } catch (error) {
                 console.error('Failed to update contest:', error);
                 throw error;
@@ -649,9 +660,10 @@
 
         async function deleteContestOnServer(contestId) {
             try {
-                await apiRequest(`/contests/${contestId}`, {
+                const response = await apiRequest(`/contests/${contestId}`, {
                     method: 'DELETE'
                 });
+                return response;
             } catch (error) {
                 console.error('Failed to delete contest:', error);
                 throw error;
