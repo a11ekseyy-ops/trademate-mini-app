@@ -86,6 +86,7 @@
             margin-bottom: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
+            cursor: pointer;
         }
 
         .contest-card:hover {
@@ -94,7 +95,7 @@
 
         .contest-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 15px;
         }
@@ -113,12 +114,25 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
+            margin-left: 10px;
         }
 
         .contest-description {
             color: #666;
             font-size: 14px;
             line-height: 1.4;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .contest-full-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
             margin-bottom: 15px;
         }
 
@@ -155,7 +169,7 @@
         }
 
         .participate-btn.participated {
-            background: #4CAF50;
+            background: #f44336;
         }
 
         .participate-btn.ended {
@@ -197,6 +211,10 @@
         .admin-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .admin-btn.delete {
+            background: #f44336;
         }
 
         .form-group {
@@ -283,6 +301,60 @@
             from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 350px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .contest-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-ended {
+            background: #f44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -345,6 +417,14 @@
         </div>
     </div>
 
+    <!-- Модальное окно деталей конкурса -->
+    <div id="contestModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeContestModal()">&times;</span>
+            <div id="contestModalContent"></div>
+        </div>
+    </div>
+
     <script>
         let tg = window.Telegram.WebApp;
         let user = null;
@@ -359,7 +439,7 @@
         user = tg.initDataUnsafe?.user;
         
         // Проверяем, является ли пользователь администратором
-        const isAdmin = user && [5790425031].includes(user.id); // Добавьте ID администраторов
+        const isAdmin = user && [5790425031].includes(user.id);
 
         // Показываем/скрываем админскую вкладку
         if (isAdmin) {
@@ -368,6 +448,260 @@
 
         // Загружаем конкурсы при запуске
         loadContests();
+
+        // Загружаем конкурсы из localStorage
+        function loadContestsFromStorage() {
+            const savedContests = localStorage.getItem('trademate_contests');
+            if (savedContests) {
+                contests = JSON.parse(savedContests);
+                
+                // Обновляем даты из строк в объекты Date
+                contests.forEach(contest => {
+                    contest.endDate = new Date(contest.endDate);
+                    contest.createdAt = new Date(contest.createdAt);
+                });
+            } else {
+                // Создаем тестовые конкурсы только если нет сохраненных
+                initializeSampleContests();
+            }
+        }
+
+        // Сохраняем конкурсы в localStorage
+        function saveContestsToStorage() {
+            localStorage.setItem('trademate_contests', JSON.stringify(contests));
+        }
+
+        // Инициализация примерных конкурсов
+        function initializeSampleContests() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+
+            contests = [
+                {
+                    id: '1',
+                    title: 'Лучший трейдер месяца',
+                    description: 'Покажите свои лучшие торговые результаты за этот месяц и выиграйте приз! Условия участия: предоставьте скриншоты ваших сделок за последние 30 дней. Победитель определяется по наибольшей прибыльности и стабильности результатов.',
+                    prize: '$500 + VIP подписка',
+                    endDate: nextWeek,
+                    createdAt: new Date(),
+                    participants: [],
+                    isActive: true,
+                    createdBy: 5790425031
+                },
+                {
+                    id: '2',
+                    title: 'Новогодний розыгрыш',
+                    description: 'Участвуйте в новогоднем розыгрыше и получите шанс выиграть эксклюзивные призы! Для участия необходимо быть подписанным на наш канал и оставить комментарий с вашим новогодним торговым планом.',
+                    prize: 'MacBook Air + $1000',
+                    endDate: tomorrow,
+                    createdAt: new Date(),
+                    participants: [],
+                    isActive: true,
+                    createdBy: 5790425031
+                }
+            ];
+            saveContestsToStorage();
+        }
+
+        function loadContests() {
+            document.getElementById('contestsList').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Загрузка конкурсов...</div>
+                </div>
+            `;
+
+            loadContestsFromStorage();
+            setTimeout(() => {
+                displayContests();
+            }, 500);
+        }
+
+        function displayContests() {
+            const contestsList = document.getElementById('contestsList');
+            const currentTime = new Date();
+            const activeContests = contests.filter(contest => 
+                contest.isActive && contest.endDate > currentTime
+            );
+
+            if (activeContests.length === 0) {
+                contestsList.innerHTML = `
+                    <div class="empty-state">
+                        <div>🎁</div>
+                        <h3>Нет активных конкурсов</h3>
+                        <p>Следите за обновлениями, скоро появятся новые конкурсы!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            contestsList.innerHTML = activeContests.map(contest => {
+                const isParticipating = user && contest.participants.includes(user.id);
+                const participantsCount = contest.participants.length;
+                
+                return `
+                <div class="contest-card" onclick="showContestDetails('${contest.id}')">
+                    <div class="contest-header">
+                        <div style="flex: 1;">
+                            <div class="contest-title">${contest.title}</div>
+                            <div class="contest-description">${contest.description}</div>
+                        </div>
+                        <div class="contest-prize">${contest.prize}</div>
+                    </div>
+                    
+                    <div class="contest-details">
+                        <div class="participants-count">
+                            👥 ${participantsCount} участников
+                        </div>
+                        <div>📅 До ${formatDate(contest.endDate)}</div>
+                    </div>
+
+                    <button class="participate-btn ${isParticipating ? 'participated' : ''}" 
+                            onclick="event.stopPropagation(); participateInContest('${contest.id}')">
+                        ${isParticipating ? '❌ Отказаться от участия' : '🎯 Участвовать'}
+                    </button>
+                </div>
+            `}).join('');
+        }
+
+        function showContestDetails(contestId) {
+            const contest = contests.find(c => c.id === contestId);
+            if (!contest) return;
+
+            const isParticipating = user && contest.participants.includes(user.id);
+            const participantsCount = contest.participants.length;
+            const isActive = contest.isActive && contest.endDate > new Date();
+
+            const modalContent = `
+                <div class="contest-header">
+                    <div style="flex: 1;">
+                        <div class="contest-title">${contest.title}</div>
+                        <span class="contest-status ${isActive ? 'status-active' : 'status-ended'}">
+                            ${isActive ? 'Активен' : 'Завершен'}
+                        </span>
+                    </div>
+                    <div class="contest-prize">${contest.prize}</div>
+                </div>
+                
+                <div class="contest-full-description">${contest.description}</div>
+                
+                <div class="contest-details">
+                    <div class="participants-count">
+                        👥 ${participantsCount} участников
+                    </div>
+                    <div>📅 До ${formatDateTime(contest.endDate)}</div>
+                </div>
+
+                <div class="contest-details">
+                    <div>🏆 Приз: ${contest.prize}</div>
+                </div>
+
+                ${isActive ? `
+                <button class="participate-btn ${isParticipating ? 'participated' : ''}" 
+                        onclick="participateInContest('${contest.id}'); closeContestModal()">
+                    ${isParticipating ? '❌ Отказаться от участия' : '🎯 Участвовать в конкурсе'}
+                </button>
+                ` : `
+                <div style="text-align: center; padding: 15px; background: #ffebee; border-radius: 10px; margin-top: 15px;">
+                    🏁 Конкурс завершен
+                </div>
+                `}
+            `;
+
+            document.getElementById('contestModalContent').innerHTML = modalContent;
+            document.getElementById('contestModal').style.display = 'block';
+        }
+
+        function closeContestModal() {
+            document.getElementById('contestModal').style.display = 'none';
+        }
+
+        function participateInContest(contestId) {
+            if (!user) {
+                showNotification('❌ Войдите в аккаунт для участия');
+                return;
+            }
+
+            const contest = contests.find(c => c.id === contestId);
+            if (!contest) return;
+
+            const isParticipating = contest.participants.includes(user.id);
+
+            if (isParticipating) {
+                // Отказ от участия
+                contest.participants = contest.participants.filter(id => id !== user.id);
+                showNotification('❌ Вы отказались от участия в конкурсе');
+            } else {
+                // Участие в конкурсе
+                contest.participants.push(user.id);
+                showNotification('🎉 Вы успешно присоединились к конкурсу!');
+            }
+
+            saveContestsToStorage();
+            displayContests();
+            loadMyContests();
+            if (document.getElementById('admin').classList.contains('active')) {
+                loadAdminContests();
+            }
+        }
+
+        function loadMyContests() {
+            const myContestsList = document.getElementById('myContestsList');
+            if (!user) {
+                myContestsList.innerHTML = `
+                    <div class="empty-state">
+                        <div>🔒</div>
+                        <h3>Войдите в аккаунт</h3>
+                        <p>Для просмотра ваших конкурсов необходимо авторизоваться</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const userContests = contests.filter(contest => 
+                contest.participants.includes(user.id)
+            );
+
+            if (userContests.length === 0) {
+                myContestsList.innerHTML = `
+                    <div class="empty-state">
+                        <div>🤔</div>
+                        <h3>Вы пока не участвуете</h3>
+                        <p>Выберите конкурс из списка активных и примите участие!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            myContestsList.innerHTML = userContests.map(contest => {
+                const isActive = contest.isActive && contest.endDate > new Date();
+                return `
+                <div class="contest-card" onclick="showContestDetails('${contest.id}')">
+                    <div class="contest-header">
+                        <div style="flex: 1;">
+                            <div class="contest-title">${contest.title}</div>
+                            <div class="contest-description">${contest.description}</div>
+                        </div>
+                        <div class="contest-prize">${contest.prize}</div>
+                    </div>
+                    
+                    <div class="contest-details">
+                        <div class="participants-count">
+                            👥 ${contest.participants.length} участников
+                        </div>
+                        <div>📅 До ${formatDate(contest.endDate)}</div>
+                    </div>
+
+                    <div style="text-align: center; padding: 10px; background: #E8F5E8; border-radius: 10px; margin-top: 10px;">
+                        ✅ Вы участвуете в этом конкурсе
+                        ${!isActive ? '<br><small>🏁 Конкурс завершен</small>' : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
 
         function showSection(sectionId) {
             // Скрываем все секции
@@ -394,155 +728,14 @@
             }
         }
 
-        function loadContests() {
-            document.getElementById('contestsList').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <div>Загрузка конкурсов...</div>
-                </div>
-            `;
-
-            // В реальном приложении здесь будет запрос к вашему API
-            setTimeout(() => {
-                // Пример данных конкурсов
-                contests = [
-                    {
-                        id: '1',
-                        title: 'Лучший трейдер месяца',
-                        description: 'Покажите свои лучшие торговые результаты за этот месяц и выиграйте приз!',
-                        prize: '$500 + VIP подписка',
-                        endDate: '2024-02-28T23:59:59',
-                        participants: 45,
-                        isParticipating: false,
-                        isActive: true
-                    },
-                    {
-                        id: '2',
-                        title: 'Новогодний розыгрыш',
-                        description: 'Участвуйте в новогоднем розыгрыше и получите шанс выиграть эксклюзивные призы!',
-                        prize: 'MacBook Air + $1000',
-                        endDate: '2024-01-15T23:59:59',
-                        participants: 128,
-                        isParticipating: true,
-                        isActive: true
-                    },
-                    {
-                        id: '3',
-                        title: 'Конкурс на лучшую стратегию',
-                        description: 'Поделитесь своей торговой стратегией и получите признание сообщества!',
-                        prize: 'Профессиональная аналитика + $300',
-                        endDate: '2024-01-10T23:59:59',
-                        participants: 67,
-                        isParticipating: false,
-                        isActive: true
-                    }
-                ];
-
-                displayContests();
-            }, 1000);
-        }
-
-        function displayContests() {
-            const contestsList = document.getElementById('contestsList');
-            const activeContests = contests.filter(contest => contest.isActive);
-
-            if (activeContests.length === 0) {
-                contestsList.innerHTML = `
-                    <div class="empty-state">
-                        <div>🎁</div>
-                        <h3>Нет активных конкурсов</h3>
-                        <p>Следите за обновлениями, скоро появятся новые конкурсы!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            contestsList.innerHTML = activeContests.map(contest => `
-                <div class="contest-card">
-                    <div class="contest-header">
-                        <div style="flex: 1;">
-                            <div class="contest-title">${contest.title}</div>
-                            <div class="contest-description">${contest.description}</div>
-                        </div>
-                        <div class="contest-prize">${contest.prize}</div>
-                    </div>
-                    
-                    <div class="contest-details">
-                        <div class="participants-count">
-                            👥 ${contest.participants} участников
-                        </div>
-                        <div>📅 До ${formatDate(contest.endDate)}</div>
-                    </div>
-
-                    <button class="participate-btn ${contest.isParticipating ? 'participated' : ''}" 
-                            onclick="participateInContest('${contest.id}')"
-                            ${contest.isParticipating ? 'disabled' : ''}>
-                        ${contest.isParticipating ? '✅ Вы участвуете' : '🎯 Участвовать'}
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function loadMyContests() {
-            const myContestsList = document.getElementById('myContestsList');
-            const userContests = contests.filter(contest => contest.isParticipating);
-
-            if (userContests.length === 0) {
-                myContestsList.innerHTML = `
-                    <div class="empty-state">
-                        <div>🤔</div>
-                        <h3>Вы пока не участвуете</h3>
-                        <p>Выберите конкурс из списка активных и примите участие!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            myContestsList.innerHTML = userContests.map(contest => `
-                <div class="contest-card">
-                    <div class="contest-header">
-                        <div style="flex: 1;">
-                            <div class="contest-title">${contest.title}</div>
-                            <div class="contest-description">${contest.description}</div>
-                        </div>
-                        <div class="contest-prize">${contest.prize}</div>
-                    </div>
-                    
-                    <div class="contest-details">
-                        <div class="participants-count">
-                            👥 ${contest.participants} участников
-                        </div>
-                        <div>📅 До ${formatDate(contest.endDate)}</div>
-                    </div>
-
-                    <div style="text-align: center; padding: 10px; background: #E8F5E8; border-radius: 10px; margin-top: 10px;">
-                        ✅ Вы участвуете в этом конкурсе
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function participateInContest(contestId) {
-            const contest = contests.find(c => c.id === contestId);
-            if (!contest) return;
-
-            // Показываем уведомление
-            showNotification('🎉 Вы успешно присоединились к конкурсу!');
-
-            // Обновляем данные
-            contest.isParticipating = true;
-            contest.participants += 1;
-
-            // Обновляем отображение
-            displayContests();
-
-            // В реальном приложении здесь будет запрос к API
-            console.log(`User ${user?.id} participating in contest ${contestId}`);
-        }
-
         function showCreateContestForm() {
             document.getElementById('createContestForm').style.display = 'block';
             document.getElementById('adminContestsList').innerHTML = '';
+            
+            // Устанавливаем минимальную дату - завтра
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('contestEndDate').min = tomorrow.toISOString().slice(0, 16);
         }
 
         function hideCreateContestForm() {
@@ -550,9 +743,9 @@
         }
 
         function createContest() {
-            const title = document.getElementById('contestTitle').value;
-            const description = document.getElementById('contestDescription').value;
-            const prize = document.getElementById('contestPrize').value;
+            const title = document.getElementById('contestTitle').value.trim();
+            const description = document.getElementById('contestDescription').value.trim();
+            const prize = document.getElementById('contestPrize').value.trim();
             const endDate = document.getElementById('contestEndDate').value;
 
             if (!title || !description || !prize || !endDate) {
@@ -565,17 +758,20 @@
                 title: title,
                 description: description,
                 prize: prize,
-                endDate: endDate,
-                participants: 0,
-                isParticipating: false,
-                isActive: true
+                endDate: new Date(endDate),
+                createdAt: new Date(),
+                participants: [],
+                isActive: true,
+                createdBy: user.id
             };
 
             contests.push(newContest);
+            saveContestsToStorage();
             
             showNotification('✅ Конкурс успешно создан!');
             hideCreateContestForm();
             loadAdminContests();
+            displayContests();
 
             // Очищаем форму
             document.getElementById('contestTitle').value = '';
@@ -599,7 +795,9 @@
                 return;
             }
 
-            adminContestsList.innerHTML = contests.map(contest => `
+            adminContestsList.innerHTML = contests.map(contest => {
+                const isActive = contest.isActive && contest.endDate > new Date();
+                return `
                 <div class="contest-card">
                     <div class="contest-header">
                         <div style="flex: 1;">
@@ -611,39 +809,51 @@
                     
                     <div class="contest-details">
                         <div class="participants-count">
-                            👥 ${contest.participants} участников
+                            👥 ${contest.participants.length} участников
                         </div>
-                        <div>📅 До ${formatDate(contest.endDate)}</div>
-                        <div>${contest.isActive ? '🟢 Активен' : '🔴 Завершен'}</div>
+                        <div>📅 До ${formatDateTime(contest.endDate)}</div>
+                        <div class="contest-status ${isActive ? 'status-active' : 'status-ended'}">
+                            ${isActive ? 'Активен' : 'Завершен'}
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
                         <button class="admin-btn" style="flex: 1; padding: 8px;" onclick="viewContestParticipants('${contest.id}')">
-                            👥 Участники
+                            👥 Участники (${contest.participants.length})
                         </button>
-                        <button class="admin-btn" style="flex: 1; padding: 8px; background: #4CAF50;" onclick="selectWinners('${contest.id}')">
+                        <button class="admin-btn" style="flex: 1; padding: 8px; background: #4CAF50;" onclick="selectWinners('${contest.id}')" ${!isActive ? 'disabled' : ''}>
                             🏆 Выбрать победителей
                         </button>
-                        <button class="admin-btn" style="flex: 1; padding: 8px; background: #f44336;" onclick="endContest('${contest.id}')">
-                            ❌ Завершить
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="admin-btn" style="flex: 1; padding: 8px; background: ${isActive ? '#f44336' : '#9E9E9E'};" onclick="${isActive ? `endContest('${contest.id}')` : ''}" ${!isActive ? 'disabled' : ''}>
+                            ${isActive ? '❌ Завершить' : '🔴 Завершен'}
+                        </button>
+                        <button class="admin-btn delete" style="flex: 1; padding: 8px;" onclick="deleteContest('${contest.id}')">
+                            🗑️ Удалить
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function viewContestParticipants(contestId) {
             const contest = contests.find(c => c.id === contestId);
             if (!contest) return;
 
-            showNotification(`👥 Участников: ${contest.participants}`);
+            if (contest.participants.length === 0) {
+                showNotification('❌ Нет участников в этом конкурсе');
+                return;
+            }
+
+            showNotification(`👥 Участников: ${contest.participants.length}`);
         }
 
         function selectWinners(contestId) {
             const contest = contests.find(c => c.id === contestId);
             if (!contest) return;
 
-            if (contest.participants === 0) {
+            if (contest.participants.length === 0) {
                 showNotification('❌ Нет участников для выбора победителей');
                 return;
             }
@@ -657,8 +867,23 @@
             if (!contest) return;
 
             contest.isActive = false;
+            saveContestsToStorage();
             showNotification('✅ Конкурс завершен');
             loadAdminContests();
+            displayContests();
+        }
+
+        function deleteContest(contestId) {
+            if (!confirm('Вы уверены, что хотите удалить этот конкурс? Это действие нельзя отменить.')) {
+                return;
+            }
+
+            contests = contests.filter(contest => contest.id !== contestId);
+            saveContestsToStorage();
+            showNotification('🗑️ Конкурс удален');
+            loadAdminContests();
+            displayContests();
+            loadMyContests();
         }
 
         function showWinners() {
@@ -672,12 +897,21 @@
             showNotification('🏆 Победители будут объявлены после завершения конкурсов');
         }
 
-        function formatDate(dateString) {
-            const date = new Date(dateString);
+        function formatDate(date) {
             return date.toLocaleDateString('ru-RU', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'
+            });
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
 
@@ -693,15 +927,18 @@
             }, 3000);
         }
 
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('contestModal');
+            if (event.target === modal) {
+                closeContestModal();
+            }
+        }
+
         // Обработка данных от Telegram Web App
         tg.onEvent('viewportChanged', () => {
             tg.expand();
         });
-
-        // Закрытие Mini App
-        function closeApp() {
-            tg.close();
-        }
     </script>
 </body>
 </html>
