@@ -430,7 +430,7 @@
                 <button class="admin-btn" onclick="showCreateContestForm()">➕ Создать конкурс</button>
                 <button class="admin-btn" onclick="loadAdminContests()">📋 Все конкурсы</button>
                 <button class="admin-btn" onclick="showWinners()">🏆 Победители</button>
-                <button class="admin-btn" onclick="syncWithServer()">🔄 Синхронизировать с сервером</button>
+                <button class="admin-btn" onclick="syncWithServer()">🔄 Синхронизировать</button>
             </div>
 
             <div id="createContestForm" style="display: none;">
@@ -473,16 +473,18 @@
     <div id="syncIndicator" class="sync-indicator">🔄 Синхронизация...</div>
 
     <script>
-        // Конфигурация
-        const SERVER_URL = 'http://localhost:8000'; // Замените на ваш URL сервера
+        // Конфигурация - используем абсолютный URL для Replit
+        const SERVER_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000' 
+            : `https://${window.location.hostname.replace('mini-app-', 'server-')}.repl.co`;
+        
         const FALLBACK_STORAGE_KEY = 'trademate_contests_fallback';
         
         let tg = window.Telegram.WebApp;
         let user = null;
         let contests = [];
         let isAdmin = false;
-        let lastUpdateTime = 0;
-        const UPDATE_INTERVAL = 5000; // 5 секунд
+        const UPDATE_INTERVAL = 10000; // 10 секунд
 
         // Инициализация
         tg.expand();
@@ -516,13 +518,19 @@
             try {
                 showSyncIndicator();
                 
-                const response = await fetch(url, {
+                const config = {
                     headers: {
                         'Content-Type': 'application/json',
                         ...options.headers
                     },
                     ...options
-                });
+                };
+                
+                if (options.body) {
+                    config.body = options.body;
+                }
+                
+                const response = await fetch(url, config);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -619,6 +627,9 @@
             try {
                 const response = await apiRequest('/contests', {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify(contestData)
                 });
                 
@@ -633,6 +644,9 @@
             try {
                 await apiRequest(`/contests/${contestId}`, {
                     method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify(updateData)
                 });
             } catch (error) {
