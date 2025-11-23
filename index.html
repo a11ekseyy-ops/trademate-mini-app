@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeMate Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .feature-text h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .feature-text p {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .profile-section {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .profile-status {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .vip-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 TradeMate</h1>
+            <p>Ваш помощник в мире трейдинга</p>
+        </div>
+
+        <div class="card">
+            <div class="profile-section">
+                <div class="profile-avatar" id="userAvatar">U</div>
+                <div class="profile-name" id="userName">Пользователь</div>
+                <div class="profile-status" id="userStatus">Загрузка...</div>
+                <div id="vipStatus"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">📈 Быстрый доступ</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="likesCount">0</div>
+                    <div class="stat-label">Лайков</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="viewsCount">0</div>
+                    <div class="stat-label">Просмотров</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="matchesCount">0</div>
+                    <div class="stat-label">Совпадений</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="daysCount">0</div>
+                    <div class="stat-label">Дней в боте</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">⚡ Функции</h3>
+            <div class="feature-item">
+                <div class="feature-icon">👤</div>
+                <div class="feature-text">
+                    <h3>Мой профиль</h3>
+                    <p>Редактируйте и просматривайте свою анкету</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-text">
+                    <h3>Поиск трейдеров</h3>
+                    <p>Находите подходящих партнеров по торговле</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">💎</div>
+                <div class="feature-text">
+                    <h3>VIP Подписка</h3>
+                    <p>Расширенные возможности и приоритет</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="button" onclick="openBotFeature('profiles')">
+            🔍 Смотреть анкеты
+        </button>
+        <button class="button" onclick="openBotFeature('vip')">
+            💎 VIP Подписка
+        </button>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        
+        // Расширяем на весь экран
+        tg.expand();
+        
+        // Получаем данные пользователя
+        const user = tg.initDataUnsafe.user;
+        
+        // Элементы DOM
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userStatus = document.getElementById('userStatus');
+        const vipStatus = document.getElementById('vipStatus');
+        const likesCount = document.getElementById('likesCount');
+        const viewsCount = document.getElementById('viewsCount');
+        const matchesCount = document.getElementById('matchesCount');
+        const daysCount = document.getElementById('daysCount');
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Заполняем данные пользователя
+            if (user) {
+                const firstName = user.first_name || 'Пользователь';
+                const lastName = user.last_name || '';
+                const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+                
+                userName.textContent = fullName;
+                userAvatar.textContent = firstName.charAt(0).toUpperCase();
+                
+                // Показываем статус
+                userStatus.textContent = 'Активный пользователь';
+                
+                // Заглушки для статистики
+                likesCount.textContent = '12';
+                viewsCount.textContent = '45';
+                matchesCount.textContent = '3';
+                daysCount.textContent = '7';
+                
+                // VIP статус
+                vipStatus.innerHTML = '<div class="vip-badge">⭐ VIP</div>';
+            } else {
+                userName.textContent = 'Гость';
+                userStatus.textContent = 'Войдите в систему';
+            }
+        }
+
+        function openBotFeature(feature) {
+            // Отправляем команду в бота через Telegram Web App
+            tg.sendData(JSON.stringify({
+                action: feature,
+                timestamp: new Date().getTime()
+            }));
+            
+            // Закрываем Web App после отправки команды
+            tg.close();
+        }
+
+        // Показываем основную кнопку
+        tg.MainButton.setText('Открыть в боте')
+            .onClick(function() {
+                tg.sendData(JSON.stringify({
+                    action: 'open_bot',
+                    user_id: user?.id
+                }));
+                tg.close();
+            });
+        
+        tg.MainButton.show();
+    </script>
+</body>
+</html>
