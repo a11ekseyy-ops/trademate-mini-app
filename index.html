@@ -355,6 +355,30 @@
             background: #f44336;
             color: white;
         }
+        
+        .sync-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .sync-indicator.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
     </style>
 </head>
 <body>
@@ -387,6 +411,7 @@
                 <button class="admin-btn" onclick="showCreateContestForm()">➕ Создать конкурс</button>
                 <button class="admin-btn" onclick="loadAdminContests()">📋 Все конкурсы</button>
                 <button class="admin-btn" onclick="showWinners()">🏆 Победители</button>
+                <button class="admin-btn" onclick="syncContests()">🔄 Синхронизировать</button>
             </div>
 
             <div id="createContestForm" style="display: none;">
@@ -424,12 +449,16 @@
             <div id="contestModalContent"></div>
         </div>
     </div>
+    
+    <!-- Индикатор синхронизации -->
+    <div id="syncIndicator" class="sync-indicator">🔄 Синхронизация...</div>
 
     <script>
         let tg = window.Telegram.WebApp;
         let user = null;
         let contests = [];
         let lastStorageCheck = '';
+        let isAdmin = false;
 
         // Инициализация
         tg.expand();
@@ -439,27 +468,41 @@
         user = tg.initDataUnsafe?.user;
         
         // Проверяем, является ли пользователь администратором
-        const isAdmin = user && [5790425031].includes(user.id);
+        isAdmin = user && [5790425031].includes(user.id);
 
         // Показываем/скрываем админскую вкладку
         if (isAdmin) {
             document.getElementById('adminTab').style.display = 'block';
         }
 
+        // Ключ для хранения конкурсов в localStorage
+        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests_final_v2';
+        const ADMIN_CONTESTS_KEY = 'trademate_admin_contests';
+
         // Загружаем конкурсы при запуске
         loadContests();
-
-        // Ключ для хранения конкурсов в localStorage
-        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests_final';
 
         // Загружаем конкурсы из localStorage
         function loadContestsFromStorage() {
             try {
+                // Для администраторов: загружаем из специального ключа
+                if (isAdmin) {
+                    const adminContests = localStorage.getItem(ADMIN_CONTESTS_KEY);
+                    if (adminContests) {
+                        const parsedContests = JSON.parse(adminContests);
+                        contests = parsedContests.map(contest => ({
+                            ...contest,
+                            endDate: new Date(contest.endDate),
+                            createdAt: new Date(contest.createdAt)
+                        }));
+                        return;
+                    }
+                }
+                
+                // Для обычных пользователей: загружаем из общего ключа
                 const savedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
                 if (savedContests) {
                     const parsedContests = JSON.parse(savedContests);
-                    
-                    // Обновляем даты из строк в объекты Date
                     contests = parsedContests.map(contest => ({
                         ...contest,
                         endDate: new Date(contest.endDate),
@@ -483,6 +526,13 @@
                     endDate: contest.endDate.toISOString(),
                     createdAt: contest.createdAt.toISOString()
                 }));
+                
+                // Для администраторов: сохраняем в специальный ключ
+                if (isAdmin) {
+                    localStorage.setItem(ADMIN_CONTESTS_KEY, JSON.stringify(contestsToSave));
+                }
+                
+                // Сохраняем также в общий ключ для синхронизации
                 localStorage.setItem(CONTESTS_STORAGE_KEY, JSON.stringify(contestsToSave));
                 
                 // Обновляем время последней проверки
@@ -500,6 +550,39 @@
                 refreshAllDisplays();
                 lastStorageCheck = currentStorage;
             }
+        }
+
+        // Синхронизация конкурсов (для администраторов)
+        function syncContests() {
+            if (!isAdmin) return;
+            
+            showSyncIndicator();
+            
+            // Имитация синхронизации с сервером
+            setTimeout(() => {
+                // Для администраторов: копируем конкурсы из общего хранилища в админское
+                const sharedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
+                if (sharedContests) {
+                    localStorage.setItem(ADMIN_CONTESTS_KEY, sharedContests);
+                    loadContestsFromStorage();
+                    refreshAllDisplays();
+                    showNotification('✅ Конкурсы синхронизированы');
+                } else {
+                    showNotification('❌ Нет данных для синхронизации');
+                }
+                
+                hideSyncIndicator();
+            }, 1500);
+        }
+
+        // Показать индикатор синхронизации
+        function showSyncIndicator() {
+            document.getElementById('syncIndicator').classList.add('active');
+        }
+
+        // Скрыть индикатор синхронизации
+        function hideSyncIndicator() {
+            document.getElementById('syncIndicator').classList.remove('active');
         }
 
         // Инициализация примерных конкурсов
