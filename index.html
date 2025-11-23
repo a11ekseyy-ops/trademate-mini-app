@@ -429,6 +429,7 @@
         let tg = window.Telegram.WebApp;
         let user = null;
         let contests = [];
+        let lastStorageCheck = '';
 
         // Инициализация
         tg.expand();
@@ -449,7 +450,7 @@
         loadContests();
 
         // Ключ для хранения конкурсов в localStorage
-        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests';
+        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests_final';
 
         // Загружаем конкурсы из localStorage
         function loadContestsFromStorage() {
@@ -484,10 +485,20 @@
                 }));
                 localStorage.setItem(CONTESTS_STORAGE_KEY, JSON.stringify(contestsToSave));
                 
-                // Триггерим событие для синхронизации между вкладками
-                window.dispatchEvent(new Event('storage'));
+                // Обновляем время последней проверки
+                lastStorageCheck = JSON.stringify(contestsToSave);
             } catch (error) {
                 console.error('Ошибка сохранения конкурсов:', error);
+            }
+        }
+
+        // Проверяем изменения в хранилище
+        function checkStorageChanges() {
+            const currentStorage = localStorage.getItem(CONTESTS_STORAGE_KEY);
+            if (currentStorage !== lastStorageCheck) {
+                loadContestsFromStorage();
+                refreshAllDisplays();
+                lastStorageCheck = currentStorage;
             }
         }
 
@@ -536,18 +547,8 @@
 
             loadContestsFromStorage();
             
-            // Слушаем изменения в localStorage от других вкладок
-            window.addEventListener('storage', function(e) {
-                if (e.key === CONTESTS_STORAGE_KEY) {
-                    loadContestsFromStorage();
-                    refreshAllDisplays();
-                }
-            });
-
-            // Периодически обновляем данные
-            setInterval(() => {
-                refreshAllDisplays();
-            }, 2000);
+            // Запускаем проверку изменений каждую секунду
+            setInterval(checkStorageChanges, 1000);
 
             setTimeout(() => {
                 displayContests();
