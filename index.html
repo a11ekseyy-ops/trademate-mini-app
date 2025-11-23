@@ -379,6 +379,25 @@
             50% { opacity: 1; }
             100% { opacity: 0.7; }
         }
+        
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .retry-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -411,7 +430,7 @@
                 <button class="admin-btn" onclick="showCreateContestForm()">➕ Создать конкурс</button>
                 <button class="admin-btn" onclick="loadAdminContests()">📋 Все конкурсы</button>
                 <button class="admin-btn" onclick="showWinners()">🏆 Победители</button>
-                <button class="admin-btn" onclick="syncContests()">🔄 Синхронизировать</button>
+                <button class="admin-btn" onclick="syncWithServer()">🔄 Синхронизировать с сервером</button>
             </div>
 
             <div id="createContestForm" style="display: none;">
@@ -454,11 +473,16 @@
     <div id="syncIndicator" class="sync-indicator">🔄 Синхронизация...</div>
 
     <script>
+        // Конфигурация
+        const SERVER_URL = 'http://localhost:8000'; // Замените на ваш URL сервера
+        const FALLBACK_STORAGE_KEY = 'trademate_contests_fallback';
+        
         let tg = window.Telegram.WebApp;
         let user = null;
         let contests = [];
-        let lastStorageCheck = '';
         let isAdmin = false;
+        let lastUpdateTime = 0;
+        const UPDATE_INTERVAL = 5000; // 5 секунд
 
         // Инициализация
         tg.expand();
@@ -475,167 +499,170 @@
             document.getElementById('adminTab').style.display = 'block';
         }
 
-        // Ключ для хранения конкурсов в localStorage
-        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests_final_v2';
-        const ADMIN_CONTESTS_KEY = 'trademate_admin_contests';
-
         // Загружаем конкурсы при запуске
-        loadContests();
+        initializeApp();
 
-        // Загружаем конкурсы из localStorage
-        function loadContestsFromStorage() {
+        async function initializeApp() {
+            await loadContests();
+            
+            // Запускаем периодическое обновление
+            setInterval(loadContests, UPDATE_INTERVAL);
+        }
+
+        // API функции
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${SERVER_URL}${endpoint}`;
+            
             try {
-                // Для администраторов: загружаем из специального ключа
-                if (isAdmin) {
-                    const adminContests = localStorage.getItem(ADMIN_CONTESTS_KEY);
-                    if (adminContests) {
-                        const parsedContests = JSON.parse(adminContests);
-                        contests = parsedContests.map(contest => ({
-                            ...contest,
-                            endDate: new Date(contest.endDate),
-                            createdAt: new Date(contest.createdAt)
-                        }));
-                        return;
-                    }
+                showSyncIndicator();
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                // Для обычных пользователей: загружаем из общего ключа
-                const savedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
-                if (savedContests) {
-                    const parsedContests = JSON.parse(savedContests);
-                    contests = parsedContests.map(contest => ({
-                        ...contest,
-                        endDate: new Date(contest.endDate),
-                        createdAt: new Date(contest.createdAt)
-                    }));
-                } else {
-                    // Создаем тестовые конкурсы только если нет сохраненных
-                    initializeSampleContests();
-                }
+                const data = await response.json();
+                hideSyncIndicator();
+                return data;
+                
             } catch (error) {
-                console.error('Ошибка загрузки конкурсов:', error);
-                initializeSampleContests();
+                hideSyncIndicator();
+                console.error('API request failed:', error);
+                
+                // Fallback to localStorage
+                const fallbackData = getFromFallbackStorage(endpoint);
+                if (fallbackData) {
+                    console.log('Using fallback data from localStorage');
+                    return fallbackData;
+                }
+                
+                throw error;
             }
         }
 
-        // Сохраняем конкурсы в localStorage
-        function saveContestsToStorage() {
+        function getFromFallbackStorage(endpoint) {
+            const fallbackData = localStorage.getItem(FALLBACK_STORAGE_KEY);
+            if (!fallbackData) return null;
+            
+            const data = JSON.parse(fallbackData);
+            
+            switch(endpoint) {
+                case '/contests':
+                    return { contests: data.filter(c => c.isActive && new Date(c.endDate) > new Date()) };
+                case '/contests/all':
+                    return { contests: data };
+                default:
+                    return null;
+            }
+        }
+
+        function saveToFallbackStorage(contestsData) {
+            localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(contestsData));
+        }
+
+        async function loadContests() {
             try {
-                const contestsToSave = contests.map(contest => ({
+                document.getElementById('contestsList').innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Загрузка конкурсов...</div>
+                    </div>
+                `;
+
+                const data = await apiRequest('/contests');
+                contests = data.contests.map(contest => ({
                     ...contest,
-                    endDate: contest.endDate.toISOString(),
-                    createdAt: contest.createdAt.toISOString()
+                    endDate: new Date(contest.endDate),
+                    createdAt: new Date(contest.createdAt)
                 }));
                 
-                // Для администраторов: сохраняем в специальный ключ
-                if (isAdmin) {
-                    localStorage.setItem(ADMIN_CONTESTS_KEY, JSON.stringify(contestsToSave));
-                }
+                // Сохраняем в fallback storage
+                saveToFallbackStorage(data.contests);
                 
-                // Сохраняем также в общий ключ для синхронизации
-                localStorage.setItem(CONTESTS_STORAGE_KEY, JSON.stringify(contestsToSave));
-                
-                // Обновляем время последней проверки
-                lastStorageCheck = JSON.stringify(contestsToSave);
-            } catch (error) {
-                console.error('Ошибка сохранения конкурсов:', error);
-            }
-        }
-
-        // Проверяем изменения в хранилище
-        function checkStorageChanges() {
-            const currentStorage = localStorage.getItem(CONTESTS_STORAGE_KEY);
-            if (currentStorage !== lastStorageCheck) {
-                loadContestsFromStorage();
-                refreshAllDisplays();
-                lastStorageCheck = currentStorage;
-            }
-        }
-
-        // Синхронизация конкурсов (для администраторов)
-        function syncContests() {
-            if (!isAdmin) return;
-            
-            showSyncIndicator();
-            
-            // Имитация синхронизации с сервером
-            setTimeout(() => {
-                // Для администраторов: копируем конкурсы из общего хранилища в админское
-                const sharedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
-                if (sharedContests) {
-                    localStorage.setItem(ADMIN_CONTESTS_KEY, sharedContests);
-                    loadContestsFromStorage();
-                    refreshAllDisplays();
-                    showNotification('✅ Конкурсы синхронизированы');
-                } else {
-                    showNotification('❌ Нет данных для синхронизации');
-                }
-                
-                hideSyncIndicator();
-            }, 1500);
-        }
-
-        // Показать индикатор синхронизации
-        function showSyncIndicator() {
-            document.getElementById('syncIndicator').classList.add('active');
-        }
-
-        // Скрыть индикатор синхронизации
-        function hideSyncIndicator() {
-            document.getElementById('syncIndicator').classList.remove('active');
-        }
-
-        // Инициализация примерных конкурсов
-        function initializeSampleContests() {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            
-            const nextWeek = new Date();
-            nextWeek.setDate(nextWeek.getDate() + 7);
-
-            contests = [
-                {
-                    id: '1',
-                    title: 'Лучший трейдер месяца',
-                    description: 'Покажите свои лучшие торговые результаты за этот месяц и выиграйте приз! Условия участия: предоставьте скриншоты ваших сделок за последние 30 дней. Победитель определяется по наибольшей прибыльности и стабильности результатов.',
-                    prize: '$500 + VIP подписка',
-                    endDate: nextWeek,
-                    createdAt: new Date(),
-                    participants: [],
-                    isActive: true,
-                    createdBy: 5790425031
-                },
-                {
-                    id: '2',
-                    title: 'Новогодний розыгрыш',
-                    description: 'Участвуйте в новогоднем розыгрыше и получите шанс выиграть эксклюзивные призы! Для участия необходимо быть подписанным на наш канал и оставить комментарий с вашим новогодним торговым планом.',
-                    prize: 'MacBook Air + $1000',
-                    endDate: tomorrow,
-                    createdAt: new Date(),
-                    participants: [],
-                    isActive: true,
-                    createdBy: 5790425031
-                }
-            ];
-            saveContestsToStorage();
-        }
-
-        function loadContests() {
-            document.getElementById('contestsList').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <div>Загрузка конкурсов...</div>
-                </div>
-            `;
-
-            loadContestsFromStorage();
-            
-            // Запускаем проверку изменений каждую секунду
-            setInterval(checkStorageChanges, 1000);
-
-            setTimeout(() => {
                 displayContests();
-            }, 500);
+                
+            } catch (error) {
+                console.error('Failed to load contests:', error);
+                document.getElementById('contestsList').innerHTML = `
+                    <div class="error-message">
+                        ❌ Ошибка загрузки конкурсов
+                        <button class="retry-btn" onclick="loadContests()">Повторить</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadAllContests() {
+            try {
+                const data = await apiRequest('/contests/all');
+                contests = data.contests.map(contest => ({
+                    ...contest,
+                    endDate: new Date(contest.endDate),
+                    createdAt: new Date(contest.createdAt)
+                }));
+                
+                return contests;
+            } catch (error) {
+                console.error('Failed to load all contests:', error);
+                throw error;
+            }
+        }
+
+        async function createContestOnServer(contestData) {
+            try {
+                const response = await apiRequest('/contests', {
+                    method: 'POST',
+                    body: JSON.stringify(contestData)
+                });
+                
+                return response;
+            } catch (error) {
+                console.error('Failed to create contest:', error);
+                throw error;
+            }
+        }
+
+        async function updateContestOnServer(contestId, updateData) {
+            try {
+                await apiRequest(`/contests/${contestId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(updateData)
+                });
+            } catch (error) {
+                console.error('Failed to update contest:', error);
+                throw error;
+            }
+        }
+
+        async function deleteContestOnServer(contestId) {
+            try {
+                await apiRequest(`/contests/${contestId}`, {
+                    method: 'DELETE'
+                });
+            } catch (error) {
+                console.error('Failed to delete contest:', error);
+                throw error;
+            }
+        }
+
+        async function participateInContestOnServer(contestId, userId) {
+            try {
+                const response = await apiRequest(`/contests/${contestId}/participate/${userId}`, {
+                    method: 'PUT'
+                });
+                
+                return response.participants;
+            } catch (error) {
+                console.error('Failed to participate in contest:', error);
+                throw error;
+            }
         }
 
         function displayContests() {
@@ -737,29 +764,34 @@
             document.getElementById('contestModal').style.display = 'none';
         }
 
-        function participateInContest(contestId) {
+        async function participateInContest(contestId) {
             if (!user) {
                 showNotification('❌ Войдите в аккаунт для участия');
                 return;
             }
 
-            const contest = contests.find(c => c.id === contestId);
-            if (!contest) return;
-
-            const isParticipating = contest.participants.includes(user.id);
-
-            if (isParticipating) {
-                // Отказ от участия
-                contest.participants = contest.participants.filter(id => id !== user.id);
-                showNotification('❌ Вы отказались от участия в конкурсе');
-            } else {
-                // Участие в конкурсе
-                contest.participants.push(user.id);
-                showNotification('🎉 Вы успешно присоединились к конкурсу!');
+            try {
+                const participants = await participateInContestOnServer(contestId, user.id);
+                
+                // Обновляем локальные данные
+                const contest = contests.find(c => c.id === contestId);
+                if (contest) {
+                    contest.participants = participants;
+                }
+                
+                const isParticipating = participants.includes(user.id);
+                
+                if (isParticipating) {
+                    showNotification('🎉 Вы успешно присоединились к конкурсу!');
+                } else {
+                    showNotification('❌ Вы отказались от участия в конкурсе');
+                }
+                
+                refreshAllDisplays();
+                
+            } catch (error) {
+                showNotification('❌ Ошибка при участии в конкурсе');
             }
-
-            saveContestsToStorage();
-            refreshAllDisplays();
         }
 
         function loadMyContests() {
@@ -870,7 +902,7 @@
             document.getElementById('createContestForm').style.display = 'none';
         }
 
-        function createContest() {
+        async function createContest() {
             const title = document.getElementById('contestTitle').value.trim();
             const description = document.getElementById('contestDescription').value.trim();
             const prize = document.getElementById('contestPrize').value.trim();
@@ -881,87 +913,104 @@
                 return;
             }
 
-            const newContest = {
-                id: Date.now().toString(),
-                title: title,
-                description: description,
-                prize: prize,
-                endDate: new Date(endDate),
-                createdAt: new Date(),
-                participants: [],
-                isActive: true,
-                createdBy: user.id
-            };
+            try {
+                const newContest = await createContestOnServer({
+                    title: title,
+                    description: description,
+                    prize: prize,
+                    endDate: endDate,
+                    createdBy: user.id
+                });
 
-            contests.push(newContest);
-            saveContestsToStorage();
-            
-            showNotification('✅ Конкурс успешно создан!');
-            hideCreateContestForm();
-            refreshAllDisplays();
+                // Добавляем в локальный список
+                contests.push({
+                    ...newContest,
+                    endDate: new Date(newContest.endDate),
+                    createdAt: new Date(newContest.createdAt)
+                });
+                
+                showNotification('✅ Конкурс успешно создан!');
+                hideCreateContestForm();
+                refreshAllDisplays();
 
-            // Очищаем форму
-            document.getElementById('contestTitle').value = '';
-            document.getElementById('contestDescription').value = '';
-            document.getElementById('contestPrize').value = '';
-            document.getElementById('contestEndDate').value = '';
+                // Очищаем форму
+                document.getElementById('contestTitle').value = '';
+                document.getElementById('contestDescription').value = '';
+                document.getElementById('contestPrize').value = '';
+                document.getElementById('contestEndDate').value = '';
+                
+            } catch (error) {
+                showNotification('❌ Ошибка при создании конкурса');
+            }
         }
 
-        function loadAdminContests() {
+        async function loadAdminContests() {
             const adminContestsList = document.getElementById('adminContestsList');
             document.getElementById('createContestForm').style.display = 'none';
 
-            if (contests.length === 0) {
+            try {
+                const allContests = await loadAllContests();
+                
+                if (allContests.length === 0) {
+                    adminContestsList.innerHTML = `
+                        <div class="empty-state">
+                            <div>📋</div>
+                            <h3>Нет созданных конкурсов</h3>
+                            <p>Создайте первый конкурс!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                adminContestsList.innerHTML = allContests.map(contest => {
+                    const isActive = contest.isActive && contest.endDate > new Date();
+                    return `
+                    <div class="contest-card">
+                        <div class="contest-header">
+                            <div style="flex: 1;">
+                                <div class="contest-title">${contest.title}</div>
+                                <div class="contest-description">${contest.description}</div>
+                            </div>
+                            <div class="contest-prize">${contest.prize}</div>
+                        </div>
+                        
+                        <div class="contest-details">
+                            <div class="participants-count">
+                                👥 ${contest.participants.length} участников
+                            </div>
+                            <div>📅 До ${formatDateTime(contest.endDate)}</div>
+                            <div class="contest-status ${isActive ? 'status-active' : 'status-ended'}">
+                                ${isActive ? 'Активен' : 'Завершен'}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="admin-btn" style="flex: 1; padding: 8px;" onclick="viewContestParticipants('${contest.id}')">
+                                👥 Участники (${contest.participants.length})
+                            </button>
+                            <button class="admin-btn" style="flex: 1; padding: 8px; background: #4CAF50;" onclick="selectWinners('${contest.id}')" ${!isActive ? 'disabled' : ''}>
+                                🏆 Выбрать победителей
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="admin-btn" style="flex: 1; padding: 8px; background: ${isActive ? '#f44336' : '#9E9E9E'};" onclick="endContest('${contest.id}')" ${!isActive ? 'disabled' : ''}>
+                                ${isActive ? '❌ Завершить' : '🔴 Завершен'}
+                            </button>
+                            <button class="admin-btn delete" style="flex: 1; padding: 8px;" onclick="deleteContest('${contest.id}')">
+                                🗑️ Удалить
+                            </button>
+                        </div>
+                    </div>
+                `}).join('');
+                
+            } catch (error) {
                 adminContestsList.innerHTML = `
-                    <div class="empty-state">
-                        <div>📋</div>
-                        <h3>Нет созданных конкурсов</h3>
-                        <p>Создайте первый конкурс!</p>
+                    <div class="error-message">
+                        ❌ Ошибка загрузки конкурсов
+                        <button class="retry-btn" onclick="loadAdminContests()">Повторить</button>
                     </div>
                 `;
-                return;
             }
-
-            adminContestsList.innerHTML = contests.map(contest => {
-                const isActive = contest.isActive && contest.endDate > new Date();
-                return `
-                <div class="contest-card">
-                    <div class="contest-header">
-                        <div style="flex: 1;">
-                            <div class="contest-title">${contest.title}</div>
-                            <div class="contest-description">${contest.description}</div>
-                        </div>
-                        <div class="contest-prize">${contest.prize}</div>
-                    </div>
-                    
-                    <div class="contest-details">
-                        <div class="participants-count">
-                            👥 ${contest.participants.length} участников
-                        </div>
-                        <div>📅 До ${formatDateTime(contest.endDate)}</div>
-                        <div class="contest-status ${isActive ? 'status-active' : 'status-ended'}">
-                            ${isActive ? 'Активен' : 'Завершен'}
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="admin-btn" style="flex: 1; padding: 8px;" onclick="viewContestParticipants('${contest.id}')">
-                            👥 Участники (${contest.participants.length})
-                        </button>
-                        <button class="admin-btn" style="flex: 1; padding: 8px; background: #4CAF50;" onclick="selectWinners('${contest.id}')" ${!isActive ? 'disabled' : ''}>
-                            🏆 Выбрать победителей
-                        </button>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="admin-btn" style="flex: 1; padding: 8px; background: ${isActive ? '#f44336' : '#9E9E9E'};" onclick="endContest('${contest.id}')" ${!isActive ? 'disabled' : ''}>
-                            ${isActive ? '❌ Завершить' : '🔴 Завершен'}
-                        </button>
-                        <button class="admin-btn delete" style="flex: 1; padding: 8px;" onclick="deleteContest('${contest.id}')">
-                            🗑️ Удалить
-                        </button>
-                    </div>
-                </div>
-            `}).join('');
         }
 
         function viewContestParticipants(contestId) {
@@ -988,25 +1037,39 @@
             showNotification('🎲 Победители выбраны случайным образом!');
         }
 
-        function endContest(contestId) {
-            const contest = contests.find(c => c.id === contestId);
-            if (!contest) return;
-
-            contest.isActive = false;
-            saveContestsToStorage();
-            showNotification('✅ Конкурс завершен');
-            refreshAllDisplays();
+        async function endContest(contestId) {
+            try {
+                await updateContestOnServer(contestId, { isActive: false });
+                
+                // Обновляем локальные данные
+                const contest = contests.find(c => c.id === contestId);
+                if (contest) {
+                    contest.isActive = false;
+                }
+                
+                showNotification('✅ Конкурс завершен');
+                refreshAllDisplays();
+            } catch (error) {
+                showNotification('❌ Ошибка при завершении конкурса');
+            }
         }
 
-        function deleteContest(contestId) {
+        async function deleteContest(contestId) {
             if (!confirm('Вы уверены, что хотите удалить этот конкурс? Это действие нельзя отменить.')) {
                 return;
             }
 
-            contests = contests.filter(contest => contest.id !== contestId);
-            saveContestsToStorage();
-            showNotification('🗑️ Конкурс удален');
-            refreshAllDisplays();
+            try {
+                await deleteContestOnServer(contestId);
+                
+                // Удаляем из локального списка
+                contests = contests.filter(contest => contest.id !== contestId);
+                
+                showNotification('🗑️ Конкурс удален');
+                refreshAllDisplays();
+            } catch (error) {
+                showNotification('❌ Ошибка при удалении конкурса');
+            }
         }
 
         function showWinners() {
@@ -1018,6 +1081,16 @@
             }
 
             showNotification('🏆 Победители будут объявлены после завершения конкурсов');
+        }
+
+        async function syncWithServer() {
+            try {
+                showNotification('🔄 Синхронизация с сервером...');
+                await loadContests();
+                showNotification('✅ Синхронизация завершена');
+            } catch (error) {
+                showNotification('❌ Ошибка синхронизации');
+            }
         }
 
         function formatDate(date) {
@@ -1048,6 +1121,14 @@
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+
+        function showSyncIndicator() {
+            document.getElementById('syncIndicator').classList.add('active');
+        }
+
+        function hideSyncIndicator() {
+            document.getElementById('syncIndicator').classList.remove('active');
         }
 
         // Закрытие модального окна при клике вне его
