@@ -449,17 +449,21 @@
         // Загружаем конкурсы при запуске
         loadContests();
 
+        // Ключ для хранения конкурсов в localStorage
+        const CONTESTS_STORAGE_KEY = 'trademate_shared_contests_v2';
+
         // Загружаем конкурсы из localStorage
         function loadContestsFromStorage() {
-            const savedContests = localStorage.getItem('trademate_contests');
+            const savedContests = localStorage.getItem(CONTESTS_STORAGE_KEY);
             if (savedContests) {
-                contests = JSON.parse(savedContests);
+                const parsedContests = JSON.parse(savedContests);
                 
                 // Обновляем даты из строк в объекты Date
-                contests.forEach(contest => {
-                    contest.endDate = new Date(contest.endDate);
-                    contest.createdAt = new Date(contest.createdAt);
-                });
+                contests = parsedContests.map(contest => ({
+                    ...contest,
+                    endDate: new Date(contest.endDate),
+                    createdAt: new Date(contest.createdAt)
+                }));
             } else {
                 // Создаем тестовые конкурсы только если нет сохраненных
                 initializeSampleContests();
@@ -468,7 +472,12 @@
 
         // Сохраняем конкурсы в localStorage
         function saveContestsToStorage() {
-            localStorage.setItem('trademate_contests', JSON.stringify(contests));
+            const contestsToSave = contests.map(contest => ({
+                ...contest,
+                endDate: contest.endDate.toISOString(),
+                createdAt: contest.createdAt.toISOString()
+            }));
+            localStorage.setItem(CONTESTS_STORAGE_KEY, JSON.stringify(contestsToSave));
         }
 
         // Инициализация примерных конкурсов
@@ -506,6 +515,47 @@
             saveContestsToStorage();
         }
 
+        // Функция для синхронизации данных между вкладками
+        function syncContests() {
+            // Слушаем изменения в localStorage
+            window.addEventListener('storage', function(e) {
+                if (e.key === CONTESTS_STORAGE_KEY) {
+                    loadContestsFromStorage();
+                    refreshAllDisplays();
+                }
+            });
+
+            // Также периодически проверяем изменения
+            setInterval(() => {
+                const currentSaved = localStorage.getItem(CONTESTS_STORAGE_KEY);
+                if (currentSaved) {
+                    const currentContests = JSON.stringify(contests.map(c => ({
+                        ...c,
+                        endDate: c.endDate.toISOString(),
+                        createdAt: c.createdAt.toISOString()
+                    })));
+                    
+                    if (currentSaved !== currentContests) {
+                        loadContestsFromStorage();
+                        refreshAllDisplays();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Обновляем все отображения
+        function refreshAllDisplays() {
+            if (document.getElementById('contests').classList.contains('active')) {
+                displayContests();
+            }
+            if (document.getElementById('my-contests').classList.contains('active')) {
+                loadMyContests();
+            }
+            if (document.getElementById('admin').classList.contains('active')) {
+                loadAdminContests();
+            }
+        }
+
         function loadContests() {
             document.getElementById('contestsList').innerHTML = `
                 <div class="loading">
@@ -515,6 +565,8 @@
             `;
 
             loadContestsFromStorage();
+            syncContests(); // Запускаем синхронизацию
+            
             setTimeout(() => {
                 displayContests();
             }, 500);
@@ -641,11 +693,7 @@
             }
 
             saveContestsToStorage();
-            displayContests();
-            loadMyContests();
-            if (document.getElementById('admin').classList.contains('active')) {
-                loadAdminContests();
-            }
+            refreshAllDisplays();
         }
 
         function loadMyContests() {
@@ -770,8 +818,7 @@
             
             showNotification('✅ Конкурс успешно создан!');
             hideCreateContestForm();
-            loadAdminContests();
-            displayContests();
+            refreshAllDisplays();
 
             // Очищаем форму
             document.getElementById('contestTitle').value = '';
@@ -869,8 +916,7 @@
             contest.isActive = false;
             saveContestsToStorage();
             showNotification('✅ Конкурс завершен');
-            loadAdminContests();
-            displayContests();
+            refreshAllDisplays();
         }
 
         function deleteContest(contestId) {
@@ -881,9 +927,7 @@
             contests = contests.filter(contest => contest.id !== contestId);
             saveContestsToStorage();
             showNotification('🗑️ Конкурс удален');
-            loadAdminContests();
-            displayContests();
-            loadMyContests();
+            refreshAllDisplays();
         }
 
         function showWinners() {
