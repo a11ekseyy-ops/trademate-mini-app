@@ -217,6 +217,26 @@
             margin: 10px 0;
         }
 
+        .setup-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .setup-btn {
+            background: #9C27B0;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+
         .notification {
             position: fixed;
             top: 20px;
@@ -234,6 +254,31 @@
             from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
+
+        .manual-input {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .manual-input input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .manual-input button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -247,7 +292,7 @@
         <div class="status-card">
             <div class="connection-status">
                 <span id="connectionIcon">🔴</span>
-                <span id="connectionText">Подключите Apple Watch</span>
+                <span id="connectionText">Требуется настройка</span>
             </div>
         </div>
 
@@ -276,6 +321,12 @@
                     <div class="zone-value">90+</div>
                     <div>Не торгуйте!</div>
                 </div>
+            </div>
+
+            <!-- Ручной ввод пульса -->
+            <div class="manual-input">
+                <input type="number" id="manualHeartRate" placeholder="Введите пульс вручную" min="40" max="200">
+                <button onclick="submitManualHeartRate()">📊</button>
             </div>
         </div>
 
@@ -323,6 +374,17 @@
             </div>
         </div>
 
+        <!-- Настройка Apple Watch -->
+        <div class="setup-section">
+            <h3 style="margin-bottom: 15px;">⌚ Настройка Apple Watch</h3>
+            <p style="margin-bottom: 15px; opacity: 0.8;">
+                Скачайте приложение для автоматической синхронизации данных
+            </p>
+            <button class="setup-btn" onclick="showWatchSetup()">
+                📲 Инструкция по настройке
+            </button>
+        </div>
+
         <!-- Калибровка -->
         <div class="calibration-section">
             <h3 style="margin-bottom: 15px;">🎯 Калибровка ваших зон</h3>
@@ -347,7 +409,9 @@
         let isRecording = false;
         let currentAction = '';
         let calibrationMode = false;
-        let baselineHeartRate = 70; // Будет определена при калибровке
+        let baselineHeartRate = 70;
+        let apiToken = '';
+        const API_BASE_URL = 'https://your-backend-url.com'; // Замените на ваш URL
 
         // Элементы DOM
         const heartRateValue = document.getElementById('heartRateValue');
@@ -358,10 +422,46 @@
         const disciplineScore = document.getElementById('disciplineScore');
 
         // Инициализация приложения
-        function initializeApp() {
+        async function initializeApp() {
             setupHeartRateChart();
-            simulateHeartRateConnection(); // В реальном приложении заменить на реальное подключение
-            loadUserStats();
+            await authenticateUser();
+            loadStatistics();
+            
+            // Запускаем периодическую загрузку статистики
+            setInterval(loadStatistics, 30000);
+        }
+
+        // Аутентификация пользователя
+        async function authenticateUser() {
+            try {
+                const user = tg.initDataUnsafe?.user;
+                if (!user) {
+                    throw new Error('User data not available');
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/generate-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        telegram_id: user.id
+                    })
+                });
+
+                const data = await response.json();
+                if (data.token) {
+                    apiToken = data.token;
+                    connectionIcon.textContent = '🟢';
+                    connectionText.textContent = 'Система подключена';
+                    showNotification('✅ Приложение готово к работе');
+                }
+            } catch (error) {
+                console.error('Authentication failed:', error);
+                connectionIcon.textContent = '🔴';
+                connectionText.textContent = 'Ошибка подключения';
+                showNotification('❌ Ошибка подключения к серверу');
+            }
         }
 
         // Настройка графика
@@ -415,38 +515,82 @@
             });
         }
 
-        // Симуляция подключения к Apple Watch (в реальном приложении заменить)
-        function simulateHeartRateConnection() {
-            connectionIcon.textContent = '🟢';
-            connectionText.textContent = 'Apple Watch подключены';
+        // Загрузка статистики
+        async function loadStatistics() {
+            if (!apiToken) return;
 
-            // Симуляция данных пульса
-            setInterval(() => {
-                const baseRate = calibrationMode ? baselineHeartRate : 70;
-                const randomVariation = Math.random() * 20 - 10;
-                const currentHeartRate = Math.max(50, Math.min(120, Math.round(baseRate + randomVariation)));
-                
-                updateHeartRate(currentHeartRate);
-            }, 2000);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${apiToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Обновление статистики
+                    avgHeartRate.textContent = data.avg_entry_heart_rate || '--';
+                    disciplineScore.textContent = data.discipline_score ? `${data.discipline_score}%` : '--%';
+                    
+                    // Обновление графика
+                    if (data.recent_data && data.recent_data.length > 0) {
+                        updateChartWithData(data.recent_data);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+            }
+        }
+
+        // Обновление графика с данными
+        function updateChartWithData(data) {
+            const heartRates = data.map(item => item.heart_rate).reverse();
+            const labels = data.map((_, index) => `${index * 2}с`).reverse();
+            
+            heartRateChart.data.labels = labels;
+            heartRateChart.data.datasets[0].data = heartRates;
+            heartRateChart.update();
+        }
+
+        // Отправка данных пульса
+        async function sendHeartRateData(heartRate, actionType = 'monitoring') {
+            if (!apiToken) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/heart-rate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({
+                        heart_rate: heartRate,
+                        action_type: actionType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send heart rate data');
+                }
+            } catch (error) {
+                console.error('Error sending heart rate data:', error);
+            }
         }
 
         // Обновление отображения пульса
-        function updateHeartRate(rate) {
+        function updateHeartRateDisplay(rate) {
             heartRateValue.textContent = rate;
             heartRateValue.className = 'heart-rate-value pulse-animation';
             
             // Обновление статуса
             updateStatus(rate);
             
-            // Добавление данных в график
-            if (heartRateData.length > 20) heartRateData.shift();
-            heartRateData.push(rate);
-            
-            updateChart();
-            
-            // Если идет запись - сохраняем данные
+            // Отправка данных на сервер
             if (isRecording) {
-                saveHeartRateData(rate, currentAction);
+                sendHeartRateData(rate, currentAction);
+            } else {
+                sendHeartRateData(rate, 'monitoring');
             }
         }
 
@@ -476,15 +620,6 @@
                 zone.classList.remove('active');
             });
             document.getElementById(zoneActive).classList.add('active');
-        }
-
-        // Обновление графика
-        function updateChart() {
-            const labels = heartRateData.map((_, index) => `${index * 2}с`);
-            
-            heartRateChart.data.labels = labels;
-            heartRateChart.data.datasets[0].data = heartRateData;
-            heartRateChart.update();
         }
 
         // Начало записи торгового действия
@@ -524,60 +659,73 @@
             });
             
             showNotification('✅ Данные сохранены');
-            updateStatistics();
+            loadStatistics(); // Обновляем статистику
         }
 
-        // Сохранение данных пульса
-        function saveHeartRateData(rate, action) {
-            const data = {
-                action: action,
-                heartRate: rate,
-                timestamp: new Date().toISOString(),
-                status: getHeartRateStatus(rate)
-            };
+        // Ручной ввод пульса
+        function submitManualHeartRate() {
+            const input = document.getElementById('manualHeartRate');
+            const rate = parseInt(input.value);
             
-            // Сохранение в localStorage (в реальном приложении - на сервер)
-            let savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
-            savedData.push(data);
-            localStorage.setItem('traderBioData', JSON.stringify(savedData));
-        }
-
-        // Загрузка статистики пользователя
-        function loadUserStats() {
-            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
-            
-            if (savedData.length > 0) {
-                const entryData = savedData.filter(d => d.action === 'entry');
-                const calmEntries = entryData.filter(d => d.heartRate <= 75).length;
-                
-                if (entryData.length > 0) {
-                    const avg = Math.round(entryData.reduce((sum, d) => sum + d.heartRate, 0) / entryData.length);
-                    avgHeartRate.textContent = avg;
-                }
-                
-                if (entryData.length > 0) {
-                    const score = Math.round((calmEntries / entryData.length) * 100);
-                    disciplineScore.textContent = `${score}%`;
-                }
+            if (rate && rate >= 40 && rate <= 200) {
+                updateHeartRateDisplay(rate);
+                input.value = '';
+                showNotification('✅ Пульс сохранен');
+            } else {
+                showNotification('❌ Введите корректное значение (40-200)');
             }
         }
 
-        // Обновление статистики
-        function updateStatistics() {
-            loadUserStats();
-        }
-
         // Калибровка базового уровня
-        function startCalibration() {
+        async function startCalibration() {
             calibrationMode = true;
             showNotification('🧘 Настройтесь на спокойное состояние...');
             
-            setTimeout(() => {
-                // В реальном приложении здесь будет анализ 2-минутного интервала
-                baselineHeartRate = 65; // Определяется на основе реальных данных
-                calibrationMode = false;
-                showNotification(`✅ Ваш базовый уровень: ${baselineHeartRate} уд/мин`);
-            }, 10000);
+            // В реальном приложении здесь будет сбор данных за 2 минуты
+            const calibrationRates = [];
+            const calibrationDuration = 10000; // 10 секунд для демо
+            
+            for (let i = 0; i < 5; i++) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                const simulatedRate = 60 + Math.random() * 10;
+                calibrationRates.push(simulatedRate);
+            }
+            
+            baselineHeartRate = Math.round(calibrationRates.reduce((a, b) => a + b) / calibrationRates.length);
+            
+            // Сохраняем калибровку на сервер
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/calibration`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({
+                        baseline_heart_rate: baselineHeartRate
+                    })
+                });
+                
+                if (response.ok) {
+                    calibrationMode = false;
+                    showNotification(`✅ Ваш базовый уровень: ${baselineHeartRate} уд/мин`);
+                }
+            } catch (error) {
+                console.error('Calibration failed:', error);
+                showNotification('❌ Ошибка калибровки');
+            }
+        }
+
+        // Показ инструкции по настройке Apple Watch
+        function showWatchSetup() {
+            const message = 
+                'Для автоматической синхронизации данных:\n\n' +
+                '1. Установите приложение "Health Auto Export" на iPhone\n' +
+                '2. Настройте экспорт данных о пульсе\n' +
+                '3. Добавьте наш веб-хук для автоматической отправки\n\n' +
+                'Подробная инструкция будет доступна в ближайшее время.';
+            
+            alert(message);
         }
 
         // Вспомогательные функции
@@ -601,22 +749,18 @@
             return emojis[action] || '📊';
         }
 
-        function getHeartRateStatus(rate) {
-            if (rate <= 75) return 'calm';
-            if (rate <= 90) return 'stress';
-            return 'panic';
-        }
-
         function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            // Используем Telegram Web App для уведомлений
+            if (tg && tg.showPopup) {
+                tg.showPopup({
+                    title: 'Уведомление',
+                    message: message,
+                    buttons: [{ type: 'ok' }]
+                });
+            } else {
+                // Fallback для браузера
+                alert(message);
+            }
         }
 
         // Запуск приложения
