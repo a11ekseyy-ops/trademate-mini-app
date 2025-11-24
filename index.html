@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeMate - Конкурсы</title>
+    <title>TradeMate - Био-трекер трейдера</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,273 +15,206 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: white;
             min-height: 100vh;
-            color: #333;
         }
 
         .container {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 100%;
+            padding: 15px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            color: white;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
         }
 
         .header h1 {
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 5px;
         }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            background: white;
+        .status-card {
+            background: rgba(255,255,255,0.1);
             border-radius: 15px;
-            padding: 5px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
-        .nav-tab {
-            flex: 1;
+        .heart-rate-display {
             text-align: center;
-            padding: 12px;
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #ff6b6b;
+        }
+
+        .heart-rate-value {
+            font-size: 64px;
+            text-shadow: 0 0 20px rgba(255,107,107,0.5);
+        }
+
+        .pulse-animation {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+
+        .status-calm {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-stress {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-panic {
+            background: #f44336;
+            color: white;
+        }
+
+        .target-zones {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .zone-card {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
             border-radius: 12px;
-            font-weight: 500;
+            text-align: center;
+        }
+
+        .zone-card.active {
+            border: 2px solid #4CAF50;
+            background: rgba(76,175,80,0.2);
+        }
+
+        .zone-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .trading-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .action-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .nav-tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .contest-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-            cursor: pointer;
-        }
-
-        .contest-card:hover {
+        .action-btn:hover {
+            background: rgba(255,255,255,0.3);
             transform: translateY(-2px);
         }
 
-        .contest-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .contest-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .contest-prize {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-            margin-left: 10px;
-        }
-
-        .contest-description {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.4;
-            margin-bottom: 15px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .contest-full-description {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-
-        .contest-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 15px;
-        }
-
-        .participants-count {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .participate-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .participate-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .participate-btn.participated {
+        .action-btn.recording {
             background: #f44336;
+            animation: recordingPulse 1s infinite;
         }
 
-        .participate-btn.ended {
-            background: #9E9E9E;
-            cursor: not-allowed;
+        @keyframes recordingPulse {
+            0% { box-shadow: 0 0 0 0 rgba(244,67,54,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(244,67,54,0); }
+            100% { box-shadow: 0 0 0 0 rgba(244,67,54,0); }
         }
 
-        .winner-badge {
-            background: #4CAF50;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 10px;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
         }
 
-        .admin-section {
-            background: white;
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            height: 200px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .connected {
+            color: #4CAF50;
+        }
+
+        .disconnected {
+            color: #f44336;
+        }
+
+        .calibration-section {
+            background: rgba(255,255,255,0.1);
             border-radius: 15px;
             padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 15px 0;
         }
 
-        .admin-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .calibration-btn {
+            background: #2196F3;
             color: white;
             border: none;
             padding: 12px 20px;
             border-radius: 25px;
-            font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .admin-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .admin-btn.delete {
-            background: #f44336;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .form-group textarea {
-            height: 100px;
-            resize: vertical;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-
-        .empty-state img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            margin: 10px 0;
         }
 
         .notification {
@@ -292,7 +226,6 @@
             color: white;
             padding: 12px 20px;
             border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             z-index: 1000;
             animation: slideDown 0.3s ease;
         }
@@ -301,832 +234,377 @@
             from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            max-width: 350px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-        }
-
-        .contest-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .status-active {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .status-ended {
-            background: #f44336;
-            color: white;
-        }
-        
-        .sync-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .sync-indicator.active {
-            display: block;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
-        
-        .error-message {
-            background: #f44336;
-            color: white;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
-            text-align: center;
-        }
-        
-        .retry-btn {
-            background: #ff9800;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎁 Конкурсы TradeMate</h1>
-            <p>Участвуйте и выигрывайте призы!</p>
+            <h1>💓 Био-трекер трейдера</h1>
+            <p>Контролируйте эмоции через пульс</p>
         </div>
 
-        <div class="nav-tabs">
-            <div class="nav-tab active" onclick="showSection('contests')">Активные</div>
-            <div class="nav-tab" onclick="showSection('my-contests')">Мои конкурсы</div>
-            <div class="nav-tab" id="adminTab" style="display: none;" onclick="showSection('admin')">Админ</div>
-        </div>
-
-        <!-- Активные конкурсы -->
-        <div id="contests" class="content-section active">
-            <div id="contestsList"></div>
-        </div>
-
-        <!-- Мои конкурсы -->
-        <div id="my-contests" class="content-section">
-            <div id="myContestsList"></div>
-        </div>
-
-        <!-- Админ панель -->
-        <div id="admin" class="content-section">
-            <div class="admin-section">
-                <h3 style="margin-bottom: 15px;">Управление конкурсами</h3>
-                <button class="admin-btn" onclick="showCreateContestForm()">➕ Создать конкурс</button>
-                <button class="admin-btn" onclick="loadAdminContests()">📋 Все конкурсы</button>
-                <button class="admin-btn" onclick="showWinners()">🏆 Победители</button>
-                <button class="admin-btn" onclick="syncWithServer()">🔄 Синхронизировать</button>
+        <!-- Статус подключения -->
+        <div class="status-card">
+            <div class="connection-status">
+                <span id="connectionIcon">🔴</span>
+                <span id="connectionText">Подключите Apple Watch</span>
             </div>
+        </div>
 
-            <div id="createContestForm" style="display: none;">
-                <div class="admin-section">
-                    <h3 style="margin-bottom: 15px;">Создать конкурс</h3>
-                    <div class="form-group">
-                        <label>Название конкурса:</label>
-                        <input type="text" id="contestTitle" placeholder="Введите название">
-                    </div>
-                    <div class="form-group">
-                        <label>Описание:</label>
-                        <textarea id="contestDescription" placeholder="Опишите условия конкурса"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Приз:</label>
-                        <input type="text" id="contestPrize" placeholder="Что можно выиграть">
-                    </div>
-                    <div class="form-group">
-                        <label>Дата окончания:</label>
-                        <input type="datetime-local" id="contestEndDate">
-                    </div>
-                    <button class="admin-btn" onclick="createContest()">Создать конкурс</button>
-                    <button class="admin-btn" style="background: #9E9E9E;" onclick="hideCreateContestForm()">Отмена</button>
+        <!-- Отображение пульса -->
+        <div class="status-card">
+            <div class="heart-rate-display">
+                <div class="heart-rate-value" id="heartRateValue">--</div>
+                <div>уд/мин</div>
+            </div>
+            
+            <div id="statusBadge" class="status-badge status-calm">СПОКОЙСТВИЕ</div>
+            
+            <div class="target-zones">
+                <div class="zone-card" id="zoneCalm">
+                    <div>🎯 Целевой</div>
+                    <div class="zone-value">60-75</div>
+                    <div>Идеально для сделок</div>
+                </div>
+                <div class="zone-card" id="zoneStress">
+                    <div>⚠️ Стресс</div>
+                    <div class="zone-value">76-90</div>
+                    <div>Будьте осторожны</div>
+                </div>
+                <div class="zone-card" id="zonePanic">
+                    <div>🚨 Паника</div>
+                    <div class="zone-value">90+</div>
+                    <div>Не торгуйте!</div>
                 </div>
             </div>
+        </div>
 
-            <div id="adminContestsList"></div>
+        <!-- Торговые действия -->
+        <div class="status-card">
+            <h3 style="margin-bottom: 15px;">📊 Запись торговых действий</h3>
+            <div class="trading-actions">
+                <button class="action-btn" onclick="startRecording('entry')">
+                    🟢 Вход в сделку
+                </button>
+                <button class="action-btn" onclick="startRecording('exit')">
+                    🔴 Выход из сделки
+                </button>
+                <button class="action-btn" onclick="startRecording('breakeven')">
+                    ⚫ Переход в б/у
+                </button>
+                <button class="action-btn" onclick="startRecording('stop_loss')">
+                    💔 Сработал стоп-лосс
+                </button>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="status-card">
+            <h3 style="margin-bottom: 15px;">📈 Ваша био-статистика</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>Средний пульс</div>
+                    <div class="stat-value" id="avgHeartRate">--</div>
+                    <div>при входе</div>
+                </div>
+                <div class="stat-card">
+                    <div>Дисциплина</div>
+                    <div class="stat-value" id="disciplineScore">--%</div>
+                    <div>спокойных сделок</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- График пульса -->
+        <div class="status-card">
+            <h3 style="margin-bottom: 15px;">📊 График пульса</h3>
+            <div class="chart-container">
+                <canvas id="heartRateChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Калибровка -->
+        <div class="calibration-section">
+            <h3 style="margin-bottom: 15px;">🎯 Калибровка ваших зон</h3>
+            <p style="margin-bottom: 15px; opacity: 0.8;">
+                Определите ваш базовый уровень спокойствия
+            </p>
+            <button class="calibration-btn" onclick="startCalibration()">
+                Начать калибровку
+            </button>
         </div>
     </div>
-
-    <!-- Модальное окно деталей конкурса -->
-    <div id="contestModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeContestModal()">&times;</span>
-            <div id="contestModalContent"></div>
-        </div>
-    </div>
-    
-    <!-- Индикатор синхронизации -->
-    <div id="syncIndicator" class="sync-indicator">🔄 Синхронизация...</div>
 
     <script>
-        // 🔧 ЗАМЕНИТЕ НА ВАШ NGROK URL
-        const SERVER_URL = 'https://subnerged-ludicrous-sabrina.ngrok-free.dev/';
-        
-        const FALLBACK_STORAGE_KEY = 'trademate_contests_fallback';
-        
+        // Инициализация Telegram Web App
         let tg = window.Telegram.WebApp;
-        let user = null;
-        let contests = [];
-        let isAdmin = false;
-        const UPDATE_INTERVAL = 30000; // 30 секунд
-
-        // Инициализация
         tg.expand();
         tg.ready();
 
-        // Получаем данные пользователя
-        user = tg.initDataUnsafe?.user;
-        
-        // Проверяем, является ли пользователь администратором
-        isAdmin = user && [5790425031].includes(user.id);
+        // Глобальные переменные
+        let heartRateData = [];
+        let heartRateChart;
+        let isRecording = false;
+        let currentAction = '';
+        let calibrationMode = false;
+        let baselineHeartRate = 70; // Будет определена при калибровке
 
-        // Показываем/скрываем админскую вкладку
-        if (isAdmin) {
-            document.getElementById('adminTab').style.display = 'block';
+        // Элементы DOM
+        const heartRateValue = document.getElementById('heartRateValue');
+        const statusBadge = document.getElementById('statusBadge');
+        const connectionIcon = document.getElementById('connectionIcon');
+        const connectionText = document.getElementById('connectionText');
+        const avgHeartRate = document.getElementById('avgHeartRate');
+        const disciplineScore = document.getElementById('disciplineScore');
+
+        // Инициализация приложения
+        function initializeApp() {
+            setupHeartRateChart();
+            simulateHeartRateConnection(); // В реальном приложении заменить на реальное подключение
+            loadUserStats();
         }
 
-        // Загружаем конкурсы при запуске
-        initializeApp();
-
-        async function initializeApp() {
-            await loadContests();
-            
-            // Запускаем периодическое обновление
-            setInterval(loadContests, UPDATE_INTERVAL);
-        }
-
-        // API функции
-        async function apiRequest(endpoint, options = {}) {
-            const url = `${SERVER_URL}${endpoint}`;
-            
-            try {
-                showSyncIndicator();
-                
-                const config = {
-                    method: options.method || 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
+        // Настройка графика
+        function setupHeartRateChart() {
+            const ctx = document.getElementById('heartRateChart').getContext('2d');
+            heartRateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Пульс',
+                        data: [],
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255,107,107,0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 50,
+                            max: 120,
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
                     },
-                    ...options
-                };
-                
-                if (options.body) {
-                    config.body = JSON.stringify(options.body);
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
                 }
-                
-                console.log(`Making request to: ${url}`);
-                const response = await fetch(url, config);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                hideSyncIndicator();
-                return data;
-                
-            } catch (error) {
-                hideSyncIndicator();
-                console.error('API request failed:', error);
-                
-                // Fallback to localStorage
-                const fallbackData = getFromFallbackStorage(endpoint);
-                if (fallbackData) {
-                    console.log('Using fallback data from localStorage');
-                    return fallbackData;
-                }
-                
-                throw error;
-            }
-        }
-
-        function getFromFallbackStorage(endpoint) {
-            try {
-                const fallbackData = localStorage.getItem(FALLBACK_STORAGE_KEY);
-                if (!fallbackData) return null;
-                
-                const data = JSON.parse(fallbackData);
-                
-                switch(endpoint) {
-                    case '/contests':
-                        return { contests: data.filter(c => c.isActive && new Date(c.endDate) > new Date()) };
-                    case '/contests/all':
-                        return { contests: data };
-                    default:
-                        return null;
-                }
-            } catch (e) {
-                return null;
-            }
-        }
-
-        function saveToFallbackStorage(contestsData) {
-            try {
-                localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(contestsData));
-            } catch (e) {
-                console.error('Failed to save to fallback storage:', e);
-            }
-        }
-
-        async function loadContests() {
-            try {
-                document.getElementById('contestsList').innerHTML = `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <div>Загрузка конкурсов...</div>
-                    </div>
-                `;
-
-                const data = await apiRequest('/contests');
-                contests = data.contests.map(contest => ({
-                    ...contest,
-                    endDate: new Date(contest.endDate),
-                    createdAt: new Date(contest.createdAt)
-                }));
-                
-                // Сохраняем в fallback storage
-                saveToFallbackStorage(data.contests);
-                
-                displayContests();
-                
-            } catch (error) {
-                console.error('Failed to load contests:', error);
-                document.getElementById('contestsList').innerHTML = `
-                    <div class="error-message">
-                        ❌ Ошибка загрузки конкурсов
-                        <button class="retry-btn" onclick="loadContests()">Повторить</button>
-                    </div>
-                `;
-            }
-        }
-
-        async function loadAllContests() {
-            try {
-                const data = await apiRequest('/contests/all');
-                contests = data.contests.map(contest => ({
-                    ...contest,
-                    endDate: new Date(contest.endDate),
-                    createdAt: new Date(contest.createdAt)
-                }));
-                
-                return contests;
-            } catch (error) {
-                console.error('Failed to load all contests:', error);
-                throw error;
-            }
-        }
-
-        async function createContestOnServer(contestData) {
-            try {
-                const response = await apiRequest('/contests', {
-                    method: 'POST',
-                    body: contestData
-                });
-                
-                return response;
-            } catch (error) {
-                console.error('Failed to create contest:', error);
-                throw error;
-            }
-        }
-
-        async function updateContestOnServer(contestId, updateData) {
-            try {
-                const response = await apiRequest(`/contests/${contestId}`, {
-                    method: 'PUT',
-                    body: updateData
-                });
-                return response;
-            } catch (error) {
-                console.error('Failed to update contest:', error);
-                throw error;
-            }
-        }
-
-        async function deleteContestOnServer(contestId) {
-            try {
-                const response = await apiRequest(`/contests/${contestId}`, {
-                    method: 'DELETE'
-                });
-                return response;
-            } catch (error) {
-                console.error('Failed to delete contest:', error);
-                throw error;
-            }
-        }
-
-        async function participateInContestOnServer(contestId, userId) {
-            try {
-                const response = await apiRequest(`/contests/${contestId}/participate/${userId}`, {
-                    method: 'PUT'
-                });
-                
-                return response.participants;
-            } catch (error) {
-                console.error('Failed to participate in contest:', error);
-                throw error;
-            }
-        }
-
-        function displayContests() {
-            const contestsList = document.getElementById('contestsList');
-            const currentTime = new Date();
-            const activeContests = contests.filter(contest => 
-                contest.isActive && contest.endDate > currentTime
-            );
-
-            if (activeContests.length === 0) {
-                contestsList.innerHTML = `
-                    <div class="empty-state">
-                        <div>🎁</div>
-                        <h3>Нет активных конкурсов</h3>
-                        <p>Следите за обновлениями, скоро появятся новые конкурсы!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            contestsList.innerHTML = activeContests.map(contest => {
-                const isParticipating = user && contest.participants.includes(user.id);
-                const participantsCount = contest.participants.length;
-                
-                return `
-                <div class="contest-card" onclick="showContestDetails('${contest.id}')">
-                    <div class="contest-header">
-                        <div style="flex: 1;">
-                            <div class="contest-title">${contest.title}</div>
-                            <div class="contest-description">${contest.description}</div>
-                        </div>
-                        <div class="contest-prize">${contest.prize}</div>
-                    </div>
-                    
-                    <div class="contest-details">
-                        <div class="participants-count">
-                            👥 ${participantsCount} участников
-                        </div>
-                        <div>📅 До ${formatDate(contest.endDate)}</div>
-                    </div>
-
-                    <button class="participate-btn ${isParticipating ? 'participated' : ''}" 
-                            onclick="event.stopPropagation(); participateInContest('${contest.id}')">
-                        ${isParticipating ? '❌ Отказаться от участия' : '🎯 Участвовать'}
-                    </button>
-                </div>
-            `}).join('');
-        }
-
-        function showContestDetails(contestId) {
-            const contest = contests.find(c => c.id === contestId);
-            if (!contest) return;
-
-            const isParticipating = user && contest.participants.includes(user.id);
-            const participantsCount = contest.participants.length;
-            const isActive = contest.isActive && contest.endDate > new Date();
-
-            const modalContent = `
-                <div class="contest-header">
-                    <div style="flex: 1;">
-                        <div class="contest-title">${contest.title}</div>
-                        <span class="contest-status ${isActive ? 'status-active' : 'status-ended'}">
-                            ${isActive ? 'Активен' : 'Завершен'}
-                        </span>
-                    </div>
-                    <div class="contest-prize">${contest.prize}</div>
-                </div>
-                
-                <div class="contest-full-description">${contest.description}</div>
-                
-                <div class="contest-details">
-                    <div class="participants-count">
-                        👥 ${participantsCount} участников
-                    </div>
-                    <div>📅 До ${formatDateTime(contest.endDate)}</div>
-                </div>
-
-                <div class="contest-details">
-                    <div>🏆 Приз: ${contest.prize}</div>
-                </div>
-
-                ${isActive ? `
-                <button class="participate-btn ${isParticipating ? 'participated' : ''}" 
-                        onclick="participateInContest('${contest.id}'); closeContestModal()">
-                    ${isParticipating ? '❌ Отказаться от участия' : '🎯 Участвовать в конкурсе'}
-                </button>
-                ` : `
-                <div style="text-align: center; padding: 15px; background: #ffebee; border-radius: 10px; margin-top: 15px;">
-                    🏁 Конкурс завершен
-                </div>
-                `}
-            `;
-
-            document.getElementById('contestModalContent').innerHTML = modalContent;
-            document.getElementById('contestModal').style.display = 'block';
-        }
-
-        function closeContestModal() {
-            document.getElementById('contestModal').style.display = 'none';
-        }
-
-        async function participateInContest(contestId) {
-            if (!user) {
-                showNotification('❌ Войдите в аккаунт для участия');
-                return;
-            }
-
-            try {
-                const participants = await participateInContestOnServer(contestId, user.id);
-                
-                // Обновляем локальные данные
-                const contest = contests.find(c => c.id === contestId);
-                if (contest) {
-                    contest.participants = participants;
-                }
-                
-                const isParticipating = participants.includes(user.id);
-                
-                if (isParticipating) {
-                    showNotification('🎉 Вы успешно присоединились к конкурсу!');
-                } else {
-                    showNotification('❌ Вы отказались от участия в конкурсе');
-                }
-                
-                refreshAllDisplays();
-                
-            } catch (error) {
-                showNotification('❌ Ошибка при участии в конкурсе');
-            }
-        }
-
-        function loadMyContests() {
-            const myContestsList = document.getElementById('myContestsList');
-            if (!user) {
-                myContestsList.innerHTML = `
-                    <div class="empty-state">
-                        <div>🔒</div>
-                        <h3>Войдите в аккаунт</h3>
-                        <p>Для просмотра ваших конкурсов необходимо авторизоваться</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const userContests = contests.filter(contest => 
-                contest.participants.includes(user.id)
-            );
-
-            if (userContests.length === 0) {
-                myContestsList.innerHTML = `
-                    <div class="empty-state">
-                        <div>🤔</div>
-                        <h3>Вы пока не участвуете</h3>
-                        <p>Выберите конкурс из списка активных и примите участие!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            myContestsList.innerHTML = userContests.map(contest => {
-                const isActive = contest.isActive && contest.endDate > new Date();
-                return `
-                <div class="contest-card" onclick="showContestDetails('${contest.id}')">
-                    <div class="contest-header">
-                        <div style="flex: 1;">
-                            <div class="contest-title">${contest.title}</div>
-                            <div class="contest-description">${contest.description}</div>
-                        </div>
-                        <div class="contest-prize">${contest.prize}</div>
-                    </div>
-                    
-                    <div class="contest-details">
-                        <div class="participants-count">
-                            👥 ${contest.participants.length} участников
-                        </div>
-                        <div>📅 До ${formatDate(contest.endDate)}</div>
-                    </div>
-
-                    <div style="text-align: center; padding: 10px; background: #E8F5E8; border-radius: 10px; margin-top: 10px;">
-                        ✅ Вы участвуете в этом конкурсе
-                        ${!isActive ? '<br><small>🏁 Конкурс завершен</small>' : ''}
-                    </div>
-                </div>
-            `}).join('');
-        }
-
-        function showSection(sectionId) {
-            // Скрываем все секции
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
             });
-
-            // Убираем активный класс со всех вкладок
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Показываем выбранную секцию
-            document.getElementById(sectionId).classList.add('active');
-
-            // Активируем соответствующую вкладку
-            event.target.classList.add('active');
-
-            // Загружаем данные для секции
-            if (sectionId === 'my-contests') {
-                loadMyContests();
-            } else if (sectionId === 'admin') {
-                loadAdminContests();
-            } else if (sectionId === 'contests') {
-                displayContests();
-            }
         }
 
-        function refreshAllDisplays() {
-            if (document.getElementById('contests').classList.contains('active')) {
-                displayContests();
-            }
-            if (document.getElementById('my-contests').classList.contains('active')) {
-                loadMyContests();
-            }
-            if (document.getElementById('admin').classList.contains('active')) {
-                loadAdminContests();
-            }
+        // Симуляция подключения к Apple Watch (в реальном приложении заменить)
+        function simulateHeartRateConnection() {
+            connectionIcon.textContent = '🟢';
+            connectionText.textContent = 'Apple Watch подключены';
+
+            // Симуляция данных пульса
+            setInterval(() => {
+                const baseRate = calibrationMode ? baselineHeartRate : 70;
+                const randomVariation = Math.random() * 20 - 10;
+                const currentHeartRate = Math.max(50, Math.min(120, Math.round(baseRate + randomVariation)));
+                
+                updateHeartRate(currentHeartRate);
+            }, 2000);
         }
 
-        function showCreateContestForm() {
-            document.getElementById('createContestForm').style.display = 'block';
-            document.getElementById('adminContestsList').innerHTML = '';
+        // Обновление отображения пульса
+        function updateHeartRate(rate) {
+            heartRateValue.textContent = rate;
+            heartRateValue.className = 'heart-rate-value pulse-animation';
             
-            // Устанавливаем минимальную дату - завтра
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('contestEndDate').min = tomorrow.toISOString().slice(0, 16);
-        }
-
-        function hideCreateContestForm() {
-            document.getElementById('createContestForm').style.display = 'none';
-        }
-
-        async function createContest() {
-            const title = document.getElementById('contestTitle').value.trim();
-            const description = document.getElementById('contestDescription').value.trim();
-            const prize = document.getElementById('contestPrize').value.trim();
-            const endDate = document.getElementById('contestEndDate').value;
-
-            if (!title || !description || !prize || !endDate) {
-                showNotification('❌ Заполните все поля');
-                return;
-            }
-
-            try {
-                const newContest = await createContestOnServer({
-                    title: title,
-                    description: description,
-                    prize: prize,
-                    endDate: endDate,
-                    createdBy: user.id
-                });
-
-                // Добавляем в локальный список
-                contests.push({
-                    ...newContest,
-                    endDate: new Date(newContest.endDate),
-                    createdAt: new Date(newContest.createdAt)
-                });
-                
-                showNotification('✅ Конкурс успешно создан!');
-                hideCreateContestForm();
-                refreshAllDisplays();
-
-                // Очищаем форму
-                document.getElementById('contestTitle').value = '';
-                document.getElementById('contestDescription').value = '';
-                document.getElementById('contestPrize').value = '';
-                document.getElementById('contestEndDate').value = '';
-                
-            } catch (error) {
-                showNotification('❌ Ошибка при создании конкурса');
-            }
-        }
-
-        async function loadAdminContests() {
-            const adminContestsList = document.getElementById('adminContestsList');
-            document.getElementById('createContestForm').style.display = 'none';
-
-            try {
-                const allContests = await loadAllContests();
-                
-                if (allContests.length === 0) {
-                    adminContestsList.innerHTML = `
-                        <div class="empty-state">
-                            <div>📋</div>
-                            <h3>Нет созданных конкурсов</h3>
-                            <p>Создайте первый конкурс!</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                adminContestsList.innerHTML = allContests.map(contest => {
-                    const isActive = contest.isActive && contest.endDate > new Date();
-                    return `
-                    <div class="contest-card">
-                        <div class="contest-header">
-                            <div style="flex: 1;">
-                                <div class="contest-title">${contest.title}</div>
-                                <div class="contest-description">${contest.description}</div>
-                            </div>
-                            <div class="contest-prize">${contest.prize}</div>
-                        </div>
-                        
-                        <div class="contest-details">
-                            <div class="participants-count">
-                                👥 ${contest.participants.length} участников
-                            </div>
-                            <div>📅 До ${formatDateTime(contest.endDate)}</div>
-                            <div class="contest-status ${isActive ? 'status-active' : 'status-ended'}">
-                                ${isActive ? 'Активен' : 'Завершен'}
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 10px; margin-top: 10px;">
-                            <button class="admin-btn" style="flex: 1; padding: 8px;" onclick="viewContestParticipants('${contest.id}')">
-                                👥 Участники (${contest.participants.length})
-                            </button>
-                            <button class="admin-btn" style="flex: 1; padding: 8px; background: #4CAF50;" onclick="selectWinners('${contest.id}')" ${!isActive ? 'disabled' : ''}>
-                                🏆 Выбрать победителей
-                            </button>
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-top: 10px;">
-                            <button class="admin-btn" style="flex: 1; padding: 8px; background: ${isActive ? '#f44336' : '#9E9E9E'};" onclick="endContest('${contest.id}')" ${!isActive ? 'disabled' : ''}>
-                                ${isActive ? '❌ Завершить' : '🔴 Завершен'}
-                            </button>
-                            <button class="admin-btn delete" style="flex: 1; padding: 8px;" onclick="deleteContest('${contest.id}')">
-                                🗑️ Удалить
-                            </button>
-                        </div>
-                    </div>
-                `}).join('');
-                
-            } catch (error) {
-                adminContestsList.innerHTML = `
-                    <div class="error-message">
-                        ❌ Ошибка загрузки конкурсов
-                        <button class="retry-btn" onclick="loadAdminContests()">Повторить</button>
-                    </div>
-                `;
-            }
-        }
-
-        function viewContestParticipants(contestId) {
-            const contest = contests.find(c => c.id === contestId);
-            if (!contest) return;
-
-            if (contest.participants.length === 0) {
-                showNotification('❌ Нет участников в этом конкурсе');
-                return;
-            }
-
-            showNotification(`👥 Участников: ${contest.participants.length}`);
-        }
-
-        function selectWinners(contestId) {
-            const contest = contests.find(c => c.id === contestId);
-            if (!contest) return;
-
-            if (contest.participants.length === 0) {
-                showNotification('❌ Нет участников для выбора победителей');
-                return;
-            }
-
-            showNotification('🎲 Победители выбраны случайным образом!');
-        }
-
-        async function endContest(contestId) {
-            try {
-                await updateContestOnServer(contestId, { isActive: false });
-                
-                // Обновляем локальные данные
-                const contest = contests.find(c => c.id === contestId);
-                if (contest) {
-                    contest.isActive = false;
-                }
-                
-                showNotification('✅ Конкурс завершен');
-                refreshAllDisplays();
-            } catch (error) {
-                showNotification('❌ Ошибка при завершении конкурса');
-            }
-        }
-
-        async function deleteContest(contestId) {
-            if (!confirm('Вы уверены, что хотите удалить этот конкурс? Это действие нельзя отменить.')) {
-                return;
-            }
-
-            try {
-                await deleteContestOnServer(contestId);
-                
-                // Удаляем из локального списка
-                contests = contests.filter(contest => contest.id !== contestId);
-                
-                showNotification('🗑️ Конкурс удален');
-                refreshAllDisplays();
-            } catch (error) {
-                showNotification('❌ Ошибка при удалении конкурса');
-            }
-        }
-
-        function showWinners() {
-            const completedContests = contests.filter(contest => !contest.isActive);
+            // Обновление статуса
+            updateStatus(rate);
             
-            if (completedContests.length === 0) {
-                showNotification('📭 Нет завершенных конкурсов');
+            // Добавление данных в график
+            if (heartRateData.length > 20) heartRateData.shift();
+            heartRateData.push(rate);
+            
+            updateChart();
+            
+            // Если идет запись - сохраняем данные
+            if (isRecording) {
+                saveHeartRateData(rate, currentAction);
+            }
+        }
+
+        // Обновление статуса на основе пульса
+        function updateStatus(heartRate) {
+            let status, badgeClass, zoneActive;
+            
+            if (heartRate <= 75) {
+                status = 'СПОКОЙСТВИЕ';
+                badgeClass = 'status-calm';
+                zoneActive = 'zoneCalm';
+            } else if (heartRate <= 90) {
+                status = 'СТРЕСС';
+                badgeClass = 'status-stress';
+                zoneActive = 'zoneStress';
+            } else {
+                status = 'ПАНИКА';
+                badgeClass = 'status-panic';
+                zoneActive = 'zonePanic';
+            }
+            
+            statusBadge.textContent = status;
+            statusBadge.className = `status-badge ${badgeClass}`;
+            
+            // Подсветка активной зоны
+            document.querySelectorAll('.zone-card').forEach(zone => {
+                zone.classList.remove('active');
+            });
+            document.getElementById(zoneActive).classList.add('active');
+        }
+
+        // Обновление графика
+        function updateChart() {
+            const labels = heartRateData.map((_, index) => `${index * 2}с`);
+            
+            heartRateChart.data.labels = labels;
+            heartRateChart.data.datasets[0].data = heartRateData;
+            heartRateChart.update();
+        }
+
+        // Начало записи торгового действия
+        function startRecording(action) {
+            if (isRecording) {
+                showNotification('❌ Завершите текущую запись');
                 return;
             }
-
-            showNotification('🏆 Победители будут объявлены после завершения конкурсов');
+            
+            isRecording = true;
+            currentAction = action;
+            
+            // Визуальная индикация записи
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                if (btn.textContent.includes(getActionEmoji(action))) {
+                    btn.classList.add('recording');
+                }
+            });
+            
+            showNotification(`🎥 Запись пульса: ${getActionName(action)}`);
+            
+            // Автоматическое завершение через 30 секунд
+            setTimeout(() => {
+                stopRecording();
+            }, 30000);
         }
 
-        async function syncWithServer() {
-            try {
-                showNotification('🔄 Синхронизация с сервером...');
-                await loadContests();
-                showNotification('✅ Синхронизация завершена');
-            } catch (error) {
-                showNotification('❌ Ошибка синхронизации');
+        // Завершение записи
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            isRecording = false;
+            
+            // Сброс визуальной индикации
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.classList.remove('recording');
+            });
+            
+            showNotification('✅ Данные сохранены');
+            updateStatistics();
+        }
+
+        // Сохранение данных пульса
+        function saveHeartRateData(rate, action) {
+            const data = {
+                action: action,
+                heartRate: rate,
+                timestamp: new Date().toISOString(),
+                status: getHeartRateStatus(rate)
+            };
+            
+            // Сохранение в localStorage (в реальном приложении - на сервер)
+            let savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
+            savedData.push(data);
+            localStorage.setItem('traderBioData', JSON.stringify(savedData));
+        }
+
+        // Загрузка статистики пользователя
+        function loadUserStats() {
+            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
+            
+            if (savedData.length > 0) {
+                const entryData = savedData.filter(d => d.action === 'entry');
+                const calmEntries = entryData.filter(d => d.heartRate <= 75).length;
+                
+                if (entryData.length > 0) {
+                    const avg = Math.round(entryData.reduce((sum, d) => sum + d.heartRate, 0) / entryData.length);
+                    avgHeartRate.textContent = avg;
+                }
+                
+                if (entryData.length > 0) {
+                    const score = Math.round((calmEntries / entryData.length) * 100);
+                    disciplineScore.textContent = `${score}%`;
+                }
             }
         }
 
-        function formatDate(date) {
-            return date.toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
+        // Обновление статистики
+        function updateStatistics() {
+            loadUserStats();
         }
 
-        function formatDateTime(date) {
-            return date.toLocaleString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+        // Калибровка базового уровня
+        function startCalibration() {
+            calibrationMode = true;
+            showNotification('🧘 Настройтесь на спокойное состояние...');
+            
+            setTimeout(() => {
+                // В реальном приложении здесь будет анализ 2-минутного интервала
+                baselineHeartRate = 65; // Определяется на основе реальных данных
+                calibrationMode = false;
+                showNotification(`✅ Ваш базовый уровень: ${baselineHeartRate} уд/мин`);
+            }, 10000);
+        }
+
+        // Вспомогательные функции
+        function getActionName(action) {
+            const names = {
+                'entry': 'Вход в сделку',
+                'exit': 'Выход из сделки', 
+                'breakeven': 'Переход в б/у',
+                'stop_loss': 'Стоп-лосс'
+            };
+            return names[action] || action;
+        }
+
+        function getActionEmoji(action) {
+            const emojis = {
+                'entry': '🟢',
+                'exit': '🔴',
+                'breakeven': '⚫',
+                'stop_loss': '💔'
+            };
+            return emojis[action] || '📊';
+        }
+
+        function getHeartRateStatus(rate) {
+            if (rate <= 75) return 'calm';
+            if (rate <= 90) return 'stress';
+            return 'panic';
         }
 
         function showNotification(message) {
@@ -1141,26 +619,8 @@
             }, 3000);
         }
 
-        function showSyncIndicator() {
-            document.getElementById('syncIndicator').classList.add('active');
-        }
-
-        function hideSyncIndicator() {
-            document.getElementById('syncIndicator').classList.remove('active');
-        }
-
-        // Закрытие модального окна при клике вне его
-        window.onclick = function(event) {
-            const modal = document.getElementById('contestModal');
-            if (event.target === modal) {
-                closeContestModal();
-            }
-        }
-
-        // Обработка данных от Telegram Web App
-        tg.onEvent('viewportChanged', () => {
-            tg.expand();
-        });
+        // Запуск приложения
+        initializeApp();
     </script>
 </body>
 </html>
