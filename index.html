@@ -23,6 +23,96 @@
         .container {
             max-width: 100%;
             padding: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .container.menu-open {
+            transform: translateX(250px);
+        }
+
+        /* Стили для меню */
+        .menu-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background: #1a2a32;
+            transition: left 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 60px 15px 20px 15px;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #4CAF50;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #ff6b6b;
+            float: right;
+        }
+
+        .custom-event-input {
+            width: 100%;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .custom-event-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .add-custom-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
         }
 
         .header {
@@ -32,6 +122,7 @@
             background: rgba(255,255,255,0.1);
             border-radius: 15px;
             backdrop-filter: blur(10px);
+            margin-top: 10px;
         }
 
         .header h1 {
@@ -121,6 +212,13 @@
         }
 
         .trading-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .custom-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
@@ -320,10 +418,53 @@
             font-size: 14px;
             text-align: center;
         }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Кнопка меню -->
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+
+    <!-- Боковое меню -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <h3>📊 Статистика по сделкам</h3>
+            <div id="tradingStats">
+                <div class="empty-state">Нет данных о сделках</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🎯 Пользовательские события</h3>
+            <input type="text" class="custom-event-input" id="customEventInput" placeholder="Название события">
+            <button class="add-custom-btn" onclick="addCustomEvent()">+ Добавить</button>
+            <div id="customEventsList">
+                <div class="empty-state">Нет пользовательских событий</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>📈 Общая статистика</h3>
+            <div class="stat-item">
+                Всего записей: <span class="stat-value" id="totalRecords">0</span>
+            </div>
+            <div class="stat-item">
+                Средний пульс: <span class="stat-value" id="overallAvgRate">--</span>
+            </div>
+            <div class="stat-item">
+                Спокойных: <span class="stat-value" id="calmPercentage">--%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container" id="mainContainer">
         <div class="header">
             <h1>💓 Био-трекер трейдера</h1>
             <p>Контролируйте эмоции через пульс</p>
@@ -394,11 +535,25 @@
                     🔴 Выход из сделки
                 </button>
                 <button class="action-btn" onclick="startRecording('breakeven')">
-                    ⚫ Переход в б/у
+                    ⚫ Безубыток
                 </button>
                 <button class="action-btn" onclick="startRecording('stop_loss')">
-                    💔 Сработал стоп-лосс
+                    💔 Стоп-лосс
                 </button>
+                <button class="action-btn" onclick="startRecording('take_profit')">
+                    💰 Тейк-профит
+                </button>
+                <button class="action-btn" onclick="startRecording('trailing_stop')">
+                    📈 Трейлинг-стоп
+                </button>
+            </div>
+        </div>
+
+        <!-- Пользовательские действия -->
+        <div class="status-card" id="customActionsSection" style="display: none;">
+            <h3 style="margin-bottom: 15px;">⭐ Пользовательские события</h3>
+            <div class="custom-actions" id="customActions">
+                <!-- Динамически добавляемые кнопки -->
             </div>
         </div>
 
@@ -438,7 +593,7 @@
             <div class="insight-card">
                 <div>📈 Прогресс</div>
                 <div class="insight-value" id="progressScore">--%</div>
-                <div>Улучшение контроля эмоций за месяц</div>
+                <div>Улучшение контроля эмоций</div>
             </div>
             
             <div class="health-message">
@@ -501,6 +656,7 @@
         let heartRateChart;
         let isRecording = false;
         let currentAction = '';
+        let customEvents = [];
 
         // Элементы DOM
         const heartRateValue = document.getElementById('heartRateValue');
@@ -511,18 +667,16 @@
         const bestPerformanceZone = document.getElementById('bestPerformanceZone');
         const calmRecord = document.getElementById('calmRecord');
         const progressScore = document.getElementById('progressScore');
+        const sidebar = document.getElementById('sidebar');
+        const mainContainer = document.getElementById('mainContainer');
 
         // Инициализация приложения
         function initializeApp() {
             setupHeartRateChart();
             loadAllData();
             updateInsights();
-            
-            // Загрузка демо-данных при первом запуске
-            if (!localStorage.getItem('appInitialized')) {
-                loadDemoData();
-                localStorage.setItem('appInitialized', 'true');
-            }
+            updateSidebarStats();
+            loadCustomEvents();
             
             // Показ предупреждения при первом запуске
             if (!localStorage.getItem('healthWarningShown')) {
@@ -531,6 +685,12 @@
                     localStorage.setItem('healthWarningShown', 'true');
                 }, 2000);
             }
+        }
+
+        // Управление меню
+        function toggleMenu() {
+            sidebar.classList.toggle('open');
+            mainContainer.classList.toggle('menu-open');
         }
 
         // Настройка графика
@@ -601,6 +761,66 @@
             }
             
             loadUserStats();
+        }
+
+        // Загрузка пользовательских событий
+        function loadCustomEvents() {
+            const savedEvents = localStorage.getItem('customEvents');
+            if (savedEvents) {
+                customEvents = JSON.parse(savedEvents);
+                updateCustomEventsUI();
+            }
+        }
+
+        // Обновление UI пользовательских событий
+        function updateCustomEventsUI() {
+            const customActionsContainer = document.getElementById('customActions');
+            const customSection = document.getElementById('customActionsSection');
+            
+            if (customEvents.length > 0) {
+                customSection.style.display = 'block';
+                customActionsContainer.innerHTML = '';
+                
+                customEvents.forEach((event, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn';
+                    button.innerHTML = `⭐ ${event.name}`;
+                    button.onclick = () => startRecording(`custom_${event.id}`);
+                    customActionsContainer.appendChild(button);
+                });
+            } else {
+                customSection.style.display = 'none';
+            }
+        }
+
+        // Добавление пользовательского события
+        function addCustomEvent() {
+            const input = document.getElementById('customEventInput');
+            const eventName = input.value.trim();
+            
+            if (!eventName) {
+                showNotification('❌ Введите название события', 'error');
+                return;
+            }
+            
+            if (eventName.length > 20) {
+                showNotification('❌ Название слишком длинное', 'error');
+                return;
+            }
+            
+            const newEvent = {
+                id: Date.now().toString(),
+                name: eventName,
+                createdAt: new Date().toISOString()
+            };
+            
+            customEvents.push(newEvent);
+            localStorage.setItem('customEvents', JSON.stringify(customEvents));
+            
+            input.value = '';
+            updateCustomEventsUI();
+            updateSidebarStats();
+            showNotification('✅ Событие добавлено');
         }
 
         // Сохранение всех данных
@@ -712,10 +932,10 @@
             
             // Визуальная индикация записи
             document.querySelectorAll('.action-btn').forEach(btn => {
-                if (btn.textContent.includes(getActionEmoji(action))) {
-                    btn.classList.add('recording');
-                }
+                btn.classList.remove('recording');
             });
+            
+            event.target.classList.add('recording');
             
             showNotification(`🎥 Запись пульса: ${getActionName(action)}`);
             
@@ -747,6 +967,7 @@
             showNotification('✅ Данные сделки сохранены');
             updateStatistics();
             updateInsights();
+            updateSidebarStats();
         }
 
         // Сохранение данных пульса для сделки
@@ -762,21 +983,6 @@
             let savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
             savedData.push(data);
             localStorage.setItem('traderBioData', JSON.stringify(savedData));
-            
-            // Если это завершение сделки - добавляем в историю
-            if (action.endsWith('_end')) {
-                const baseAction = action.replace('_end', '');
-                const tradeData = {
-                    action: baseAction,
-                    heartRate: rate,
-                    timestamp: new Date().toISOString(),
-                    profitable: Math.random() > 0.3 // Демо-данные
-                };
-                
-                let tradeHistory = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
-                tradeHistory.push(tradeData);
-                localStorage.setItem('tradeHistory', JSON.stringify(tradeHistory));
-            }
         }
 
         // Загрузка статистики пользователя
@@ -790,12 +996,102 @@
                 if (entryData.length > 0) {
                     const avg = Math.round(entryData.reduce((sum, d) => sum + d.heartRate, 0) / entryData.length);
                     avgHeartRate.textContent = avg;
+                } else {
+                    avgHeartRate.textContent = '--';
                 }
                 
                 if (entryData.length > 0) {
                     const score = Math.round((calmEntries / entryData.length) * 100);
                     disciplineScore.textContent = `${score}%`;
+                } else {
+                    disciplineScore.textContent = '--%';
                 }
+            } else {
+                avgHeartRate.textContent = '--';
+                disciplineScore.textContent = '--%';
+            }
+        }
+
+        // Обновление статистики в боковом меню
+        function updateSidebarStats() {
+            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
+            const tradingStatsContainer = document.getElementById('tradingStats');
+            const totalRecords = document.getElementById('totalRecords');
+            const overallAvgRate = document.getElementById('overallAvgRate');
+            const calmPercentage = document.getElementById('calmPercentage');
+            
+            // Общая статистика
+            totalRecords.textContent = savedData.length;
+            
+            if (savedData.length > 0) {
+                const avgRate = Math.round(savedData.reduce((sum, d) => sum + d.heartRate, 0) / savedData.length);
+                overallAvgRate.textContent = avgRate;
+                
+                const calmEntries = savedData.filter(d => d.heartRate <= 75).length;
+                const calmPercent = Math.round((calmEntries / savedData.length) * 100);
+                calmPercentage.textContent = `${calmPercent}%`;
+            } else {
+                overallAvgRate.textContent = '--';
+                calmPercentage.textContent = '--%';
+            }
+            
+            // Статистика по типам сделок
+            const actionTypes = {
+                'entry': 'Вход в сделку',
+                'exit': 'Выход из сделки',
+                'breakeven': 'Безубыток',
+                'stop_loss': 'Стоп-лосс',
+                'take_profit': 'Тейк-профит',
+                'trailing_stop': 'Трейлинг-стоп'
+            };
+            
+            // Добавляем пользовательские события
+            customEvents.forEach(event => {
+                actionTypes[`custom_${event.id}`] = event.name;
+            });
+            
+            let statsHTML = '';
+            
+            Object.keys(actionTypes).forEach(action => {
+                const actionData = savedData.filter(d => d.action === action);
+                if (actionData.length > 0) {
+                    const avgRate = Math.round(actionData.reduce((sum, d) => sum + d.heartRate, 0) / actionData.length);
+                    const minRate = Math.min(...actionData.map(d => d.heartRate));
+                    const maxRate = Math.max(...actionData.map(d => d.heartRate));
+                    
+                    statsHTML += `
+                        <div class="stat-item">
+                            <div>${actionTypes[action]}</div>
+                            <div class="stat-value">${avgRate}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${minRate}-${maxRate}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (statsHTML) {
+                tradingStatsContainer.innerHTML = statsHTML;
+            } else {
+                tradingStatsContainer.innerHTML = '<div class="empty-state">Нет данных о сделках</div>';
+            }
+            
+            // Обновление списка пользовательских событий в меню
+            const customEventsList = document.getElementById('customEventsList');
+            if (customEvents.length > 0) {
+                let customHTML = '';
+                customEvents.forEach(event => {
+                    const eventData = savedData.filter(d => d.action === `custom_${event.id}`);
+                    const count = eventData.length;
+                    customHTML += `
+                        <div class="stat-item">
+                            <div>${event.name}</div>
+                            <div class="stat-value">${count}</div>
+                        </div>
+                    `;
+                });
+                customEventsList.innerHTML = customHTML;
+            } else {
+                customEventsList.innerHTML = '<div class="empty-state">Нет пользовательских событий</div>';
             }
         }
 
@@ -806,77 +1102,38 @@
 
         // Обновление инсайтов (безопасная версия)
         function updateInsights() {
-            const tradeHistory = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
-            const heartRateHistory = JSON.parse(localStorage.getItem('heartRateHistory') || '[]');
+            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
+            const entryData = savedData.filter(d => d.action === 'entry');
             
-            if (tradeHistory.length > 0) {
-                // Лучшая зона эффективности (без указания "идеального" пульса)
-                const profitableTrades = tradeHistory.filter(t => t.profitable);
-                if (profitableTrades.length > 1) {
-                    const heartRates = profitableTrades.map(t => t.heartRate);
-                    const minRate = Math.min(...heartRates);
-                    const maxRate = Math.max(...heartRates);
-                    bestPerformanceZone.textContent = `${minRate}-${maxRate} уд/мин`;
-                } else {
-                    bestPerformanceZone.textContent = "65-75 уд/мин";
-                }
+            if (entryData.length > 0) {
+                // Лучшая зона эффективности
+                const heartRates = entryData.map(d => d.heartRate);
+                const minRate = Math.min(...heartRates);
+                const maxRate = Math.max(...heartRates);
+                bestPerformanceZone.textContent = `${minRate}-${maxRate} уд/мин`;
                 
                 // Рекорд спокойствия
-                const successfulTrades = tradeHistory.filter(t => t.profitable && t.heartRate <= 75);
-                if (successfulTrades.length > 0) {
-                    const minHeartRate = Math.min(...successfulTrades.map(t => t.heartRate));
+                const calmEntries = entryData.filter(d => d.heartRate <= 75);
+                if (calmEntries.length > 0) {
+                    const minHeartRate = Math.min(...calmEntries.map(d => d.heartRate));
                     calmRecord.textContent = `${minHeartRate} уд/мин`;
                 } else {
                     calmRecord.textContent = "-- уд/мин";
                 }
                 
-                // Прогресс (сравнение с предыдущим периодом)
-                if (tradeHistory.length > 5) {
-                    const recentTrades = tradeHistory.slice(-5);
-                    const calmRecent = recentTrades.filter(t => t.heartRate <= 75).length;
-                    progressScore.textContent = `${Math.round((calmRecent / 5) * 100)}%`;
+                // Прогресс
+                if (entryData.length > 1) {
+                    const recentEntries = entryData.slice(-5);
+                    const calmRecent = recentEntries.filter(d => d.heartRate <= 75).length;
+                    progressScore.textContent = `${Math.round((calmRecent / recentEntries.length) * 100)}%`;
                 } else {
                     progressScore.textContent = "--%";
                 }
             } else {
-                bestPerformanceZone.textContent = "65-75 уд/мин";
+                bestPerformanceZone.textContent = "-- -- уд/мин";
                 calmRecord.textContent = "-- уд/мин";
                 progressScore.textContent = "--%";
             }
-        }
-
-        // Загрузка демо-данных
-        function loadDemoData() {
-            const now = new Date();
-            
-            // Демо-данные пульса
-            for (let i = 0; i < 10; i++) {
-                const time = new Date(now.getTime() - (10 - i) * 600000);
-                heartRateData.push({
-                    rate: 65 + Math.floor(Math.random() * 10),
-                    time: `${time.getHours()}:${time.getMinutes().toString().padStart(2, '0')}`,
-                    timestamp: time.getTime()
-                });
-            }
-            
-            saveAllData();
-            
-            // Демо-данные сделок
-            const demoData = [
-                { action: 'entry', heartRate: 68, timestamp: new Date(Date.now() - 3600000).toISOString(), status: 'calm' },
-                { action: 'exit', heartRate: 72, timestamp: new Date(Date.now() - 1800000).toISOString(), status: 'calm' },
-                { action: 'entry', heartRate: 85, timestamp: new Date(Date.now() - 900000).toISOString(), status: 'stress' }
-            ];
-            
-            localStorage.setItem('traderBioData', JSON.stringify(demoData));
-            
-            const demoTrades = [
-                { action: 'entry', heartRate: 68, timestamp: new Date(Date.now() - 86400000).toISOString(), profitable: true },
-                { action: 'entry', heartRate: 72, timestamp: new Date(Date.now() - 172800000).toISOString(), profitable: true },
-                { action: 'entry', heartRate: 85, timestamp: new Date(Date.now() - 259200000).toISOString(), profitable: false }
-            ];
-            
-            localStorage.setItem('tradeHistory', JSON.stringify(demoTrades));
         }
 
         // Управление данными
@@ -906,22 +1163,20 @@
             calmRecord.textContent = '-- уд/мин';
             progressScore.textContent = '--%';
             
-            hideConfirmModal();
-            showNotification('✅ Все данные очищены');
+            customEvents = [];
+            updateCustomEventsUI();
             
-            // Перезагрузка демо-данных
-            setTimeout(() => {
-                loadDemoData();
-                loadAllData();
-                updateInsights();
-            }, 1000);
+            hideConfirmModal();
+            updateSidebarStats();
+            showNotification('✅ Все данные очищены');
         }
 
         function exportData() {
             const data = {
                 heartRateHistory: heartRateData,
                 tradeData: JSON.parse(localStorage.getItem('traderBioData') || '[]'),
-                tradeHistory: JSON.parse(localStorage.getItem('tradeHistory') || '[]')
+                customEvents: customEvents,
+                exportDate: new Date().toISOString()
             };
             
             const dataStr = JSON.stringify(data, null, 2);
@@ -937,21 +1192,33 @@
 
         // Вспомогательные функции
         function getActionName(action) {
+            if (action.startsWith('custom_')) {
+                const eventId = action.replace('custom_', '');
+                const customEvent = customEvents.find(e => e.id === eventId);
+                return customEvent ? customEvent.name : 'Пользовательское событие';
+            }
+            
             const names = {
                 'entry': 'Вход в сделку',
                 'exit': 'Выход из сделки', 
-                'breakeven': 'Переход в б/у',
-                'stop_loss': 'Стоп-лосс'
+                'breakeven': 'Безубыток',
+                'stop_loss': 'Стоп-лосс',
+                'take_profit': 'Тейк-профит',
+                'trailing_stop': 'Трейлинг-стоп'
             };
             return names[action] || action;
         }
 
         function getActionEmoji(action) {
+            if (action.startsWith('custom_')) return '⭐';
+            
             const emojis = {
                 'entry': '🟢',
                 'exit': '🔴',
                 'breakeven': '⚫',
-                'stop_loss': '💔'
+                'stop_loss': '💔',
+                'take_profit': '💰',
+                'trailing_stop': '📈'
             };
             return emojis[action] || '📊';
         }
