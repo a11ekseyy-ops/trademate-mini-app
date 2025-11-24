@@ -182,39 +182,69 @@
             height: 200px;
         }
 
-        .connection-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .connected {
-            color: #4CAF50;
-        }
-
-        .disconnected {
-            color: #f44336;
-        }
-
-        .calibration-section {
+        .manual-input-section {
             background: rgba(255,255,255,0.1);
             border-radius: 15px;
             padding: 20px;
             margin: 15px 0;
         }
 
-        .calibration-btn {
-            background: #2196F3;
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .heart-rate-input {
+            flex: 1;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .heart-rate-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .submit-btn {
+            background: #4CAF50;
             color: white;
             border: none;
             padding: 12px 20px;
-            border-radius: 25px;
+            border-radius: 12px;
             font-size: 16px;
             cursor: pointer;
-            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .insights-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .insight-card {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 12px;
             margin: 10px 0;
+        }
+
+        .insight-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 5px 0;
         }
 
         .notification {
@@ -243,14 +273,6 @@
             <p>Контролируйте эмоции через пульс</p>
         </div>
 
-        <!-- Статус подключения -->
-        <div class="status-card">
-            <div class="connection-status">
-                <span id="connectionIcon">🔴</span>
-                <span id="connectionText">Подключите Apple Watch</span>
-            </div>
-        </div>
-
         <!-- Отображение пульса -->
         <div class="status-card">
             <div class="heart-rate-display">
@@ -277,6 +299,16 @@
                     <div>Не торгуйте!</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Ручной ввод пульса -->
+        <div class="manual-input-section">
+            <h3 style="margin-bottom: 15px;">📝 Введите текущий пульс</h3>
+            <div class="input-group">
+                <input type="number" class="heart-rate-input" id="heartRateInput" placeholder="65" min="40" max="180">
+                <button class="submit-btn" onclick="submitHeartRate()">OK</button>
+            </div>
+            <p style="opacity: 0.8; font-size: 14px;">Измерьте пульс на часах и введите значение</p>
         </div>
 
         <!-- Торговые действия -->
@@ -315,23 +347,32 @@
             </div>
         </div>
 
+        <!-- Инсайты -->
+        <div class="insights-section">
+            <h3 style="margin-bottom: 15px;">💡 Ваши био-инсайты</h3>
+            <div class="insight-card">
+                <div>🎯 Идеальный пульс</div>
+                <div class="insight-value" id="idealHeartRate">-- уд/мин</div>
+                <div>При этом пульсе самая высокая прибыль</div>
+            </div>
+            <div class="insight-card">
+                <div>📊 Рекорд спокойствия</div>
+                <div class="insight-value" id="calmRecord">-- уд/мин</div>
+                <div>Самый низкий пульс при успешной сделке</div>
+            </div>
+            <div class="insight-card">
+                <div>⚡ Зона эффективности</div>
+                <div class="insight-value" id="efficiencyZone">-- -- уд/мин</div>
+                <div>Диапазон пульса с лучшими результатами</div>
+            </div>
+        </div>
+
         <!-- График пульса -->
         <div class="status-card">
             <h3 style="margin-bottom: 15px;">📊 График пульса</h3>
             <div class="chart-container">
                 <canvas id="heartRateChart"></canvas>
             </div>
-        </div>
-
-        <!-- Калибровка -->
-        <div class="calibration-section">
-            <h3 style="margin-bottom: 15px;">🎯 Калибровка ваших зон</h3>
-            <p style="margin-bottom: 15px; opacity: 0.8;">
-                Определите ваш базовый уровень спокойствия
-            </p>
-            <button class="calibration-btn" onclick="startCalibration()">
-                Начать калибровку
-            </button>
         </div>
     </div>
 
@@ -346,22 +387,28 @@
         let heartRateChart;
         let isRecording = false;
         let currentAction = '';
-        let calibrationMode = false;
-        let baselineHeartRate = 70; // Будет определена при калибровке
+        let tradeHistory = [];
 
         // Элементы DOM
         const heartRateValue = document.getElementById('heartRateValue');
         const statusBadge = document.getElementById('statusBadge');
-        const connectionIcon = document.getElementById('connectionIcon');
-        const connectionText = document.getElementById('connectionText');
+        const heartRateInput = document.getElementById('heartRateInput');
         const avgHeartRate = document.getElementById('avgHeartRate');
         const disciplineScore = document.getElementById('disciplineScore');
+        const idealHeartRate = document.getElementById('idealHeartRate');
+        const calmRecord = document.getElementById('calmRecord');
+        const efficiencyZone = document.getElementById('efficiencyZone');
 
         // Инициализация приложения
         function initializeApp() {
             setupHeartRateChart();
-            simulateHeartRateConnection(); // В реальном приложении заменить на реальное подключение
             loadUserStats();
+            updateInsights();
+            
+            // Загрузка демо-данных при первом запуске
+            if (!localStorage.getItem('traderBioData')) {
+                loadDemoData();
+            }
         }
 
         // Настройка графика
@@ -415,19 +462,18 @@
             });
         }
 
-        // Симуляция подключения к Apple Watch (в реальном приложении заменить)
-        function simulateHeartRateConnection() {
-            connectionIcon.textContent = '🟢';
-            connectionText.textContent = 'Apple Watch подключены';
-
-            // Симуляция данных пульса
-            setInterval(() => {
-                const baseRate = calibrationMode ? baselineHeartRate : 70;
-                const randomVariation = Math.random() * 20 - 10;
-                const currentHeartRate = Math.max(50, Math.min(120, Math.round(baseRate + randomVariation)));
-                
-                updateHeartRate(currentHeartRate);
-            }, 2000);
+        // Отправка пульса вручную
+        function submitHeartRate() {
+            const rate = parseInt(heartRateInput.value);
+            
+            if (isNaN(rate) || rate < 40 || rate > 180) {
+                showNotification('❌ Введите корректное значение пульса (40-180)');
+                return;
+            }
+            
+            updateHeartRate(rate);
+            heartRateInput.value = '';
+            showNotification('✅ Пульс обновлен');
         }
 
         // Обновление отображения пульса
@@ -439,8 +485,14 @@
             updateStatus(rate);
             
             // Добавление данных в график
-            if (heartRateData.length > 20) heartRateData.shift();
-            heartRateData.push(rate);
+            const now = new Date();
+            const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            if (heartRateData.length > 15) heartRateData.shift();
+            heartRateData.push({
+                rate: rate,
+                time: timeLabel
+            });
             
             updateChart();
             
@@ -480,10 +532,11 @@
 
         // Обновление графика
         function updateChart() {
-            const labels = heartRateData.map((_, index) => `${index * 2}с`);
+            const labels = heartRateData.map(item => item.time);
+            const data = heartRateData.map(item => item.rate);
             
             heartRateChart.data.labels = labels;
-            heartRateChart.data.datasets[0].data = heartRateData;
+            heartRateChart.data.datasets[0].data = data;
             heartRateChart.update();
         }
 
@@ -491,6 +544,12 @@
         function startRecording(action) {
             if (isRecording) {
                 showNotification('❌ Завершите текущую запись');
+                return;
+            }
+            
+            const currentRate = parseInt(heartRateValue.textContent);
+            if (isNaN(currentRate)) {
+                showNotification('❌ Сначала введите текущий пульс');
                 return;
             }
             
@@ -506,6 +565,9 @@
             
             showNotification(`🎥 Запись пульса: ${getActionName(action)}`);
             
+            // Сохраняем начальные данные
+            saveHeartRateData(currentRate, action);
+            
             // Автоматическое завершение через 30 секунд
             setTimeout(() => {
                 stopRecording();
@@ -516,6 +578,11 @@
         function stopRecording() {
             if (!isRecording) return;
             
+            const finalRate = parseInt(heartRateValue.textContent);
+            if (!isNaN(finalRate)) {
+                saveHeartRateData(finalRate, `${currentAction}_end`);
+            }
+            
             isRecording = false;
             
             // Сброс визуальной индикации
@@ -523,8 +590,9 @@
                 btn.classList.remove('recording');
             });
             
-            showNotification('✅ Данные сохранены');
+            showNotification('✅ Данные сделки сохранены');
             updateStatistics();
+            updateInsights();
         }
 
         // Сохранение данных пульса
@@ -536,10 +604,26 @@
                 status: getHeartRateStatus(rate)
             };
             
-            // Сохранение в localStorage (в реальном приложении - на сервер)
+            // Сохранение в localStorage
             let savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
             savedData.push(data);
             localStorage.setItem('traderBioData', JSON.stringify(savedData));
+            
+            // Если это завершение сделки - добавляем в историю
+            if (action.endsWith('_end')) {
+                const baseAction = action.replace('_end', '');
+                const tradeData = {
+                    action: baseAction,
+                    heartRate: rate,
+                    timestamp: new Date().toISOString(),
+                    // В реальном приложении здесь будут данные о прибыльности сделки
+                    profitable: Math.random() > 0.3 // Демо-данные
+                };
+                
+                let tradeHistory = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
+                tradeHistory.push(tradeData);
+                localStorage.setItem('tradeHistory', JSON.stringify(tradeHistory));
+            }
         }
 
         // Загрузка статистики пользователя
@@ -567,17 +651,56 @@
             loadUserStats();
         }
 
-        // Калибровка базового уровня
-        function startCalibration() {
-            calibrationMode = true;
-            showNotification('🧘 Настройтесь на спокойное состояние...');
+        // Обновление инсайтов
+        function updateInsights() {
+            const tradeHistory = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
             
-            setTimeout(() => {
-                // В реальном приложении здесь будет анализ 2-минутного интервала
-                baselineHeartRate = 65; // Определяется на основе реальных данных
-                calibrationMode = false;
-                showNotification(`✅ Ваш базовый уровень: ${baselineHeartRate} уд/мин`);
-            }, 10000);
+            if (tradeHistory.length > 0) {
+                // Идеальный пульс (самый прибыльный)
+                const profitableTrades = tradeHistory.filter(t => t.profitable);
+                if (profitableTrades.length > 0) {
+                    const heartRates = profitableTrades.map(t => t.heartRate);
+                    const idealRate = Math.round(heartRates.reduce((a, b) => a + b, 0) / heartRates.length);
+                    idealHeartRate.textContent = `${idealRate} уд/мин`;
+                }
+                
+                // Рекорд спокойствия
+                const successfulTrades = tradeHistory.filter(t => t.profitable && t.heartRate <= 75);
+                if (successfulTrades.length > 0) {
+                    const minHeartRate = Math.min(...successfulTrades.map(t => t.heartRate));
+                    calmRecord.textContent = `${minHeartRate} уд/мин`;
+                }
+                
+                // Зона эффективности
+                const allHeartRates = tradeHistory.map(t => t.heartRate);
+                if (allHeartRates.length > 0) {
+                    const avg = allHeartRates.reduce((a, b) => a + b, 0) / allHeartRates.length;
+                    efficiencyZone.textContent = `${Math.round(avg - 5)}-${Math.round(avg + 5)} уд/мин`;
+                }
+            } else {
+                idealHeartRate.textContent = "68 уд/мин";
+                calmRecord.textContent = "62 уд/мин";
+                efficiencyZone.textContent = "65-75 уд/мин";
+            }
+        }
+
+        // Загрузка демо-данных
+        function loadDemoData() {
+            const demoData = [
+                { action: 'entry', heartRate: 68, timestamp: new Date(Date.now() - 3600000).toISOString(), status: 'calm' },
+                { action: 'exit', heartRate: 72, timestamp: new Date(Date.now() - 1800000).toISOString(), status: 'calm' },
+                { action: 'entry', heartRate: 85, timestamp: new Date(Date.now() - 900000).toISOString(), status: 'stress' }
+            ];
+            
+            localStorage.setItem('traderBioData', JSON.stringify(demoData));
+            
+            const demoTrades = [
+                { action: 'entry', heartRate: 68, timestamp: new Date(Date.now() - 86400000).toISOString(), profitable: true },
+                { action: 'entry', heartRate: 72, timestamp: new Date(Date.now() - 172800000).toISOString(), profitable: true },
+                { action: 'entry', heartRate: 85, timestamp: new Date(Date.now() - 259200000).toISOString(), profitable: false }
+            ];
+            
+            localStorage.setItem('tradeHistory', JSON.stringify(demoTrades));
         }
 
         // Вспомогательные функции
@@ -618,6 +741,13 @@
                 notification.remove();
             }, 3000);
         }
+
+        // Обработка нажатия Enter в поле ввода
+        heartRateInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitHeartRate();
+            }
+        });
 
         // Запуск приложения
         initializeApp();
