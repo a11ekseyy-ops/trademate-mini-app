@@ -247,6 +247,44 @@
             margin: 5px 0;
         }
 
+        .warning-section {
+            background: rgba(255,193,7,0.2);
+            border: 1px solid rgba(255,193,7,0.5);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .warning-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .settings-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .danger-btn {
+            background: rgba(244,67,54,0.3);
+            color: white;
+            border: 1px solid rgba(244,67,54,0.5);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .danger-btn:hover {
+            background: rgba(244,67,54,0.5);
+            transform: translateY(-2px);
+        }
+
         .notification {
             position: fixed;
             top: 20px;
@@ -260,9 +298,27 @@
             animation: slideDown 0.3s ease;
         }
 
+        .notification.warning {
+            background: #ff9800;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
         @keyframes slideDown {
             from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .health-message {
+            background: rgba(76,175,80,0.2);
+            border: 1px solid rgba(76,175,80,0.5);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 14px;
+            text-align: center;
         }
     </style>
 </head>
@@ -271,6 +327,18 @@
         <div class="header">
             <h1>💓 Био-трекер трейдера</h1>
             <p>Контролируйте эмоции через пульс</p>
+        </div>
+
+        <!-- Предупреждение о здоровье -->
+        <div class="warning-section">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span class="warning-icon">⚠️</span>
+                <strong>Важно для вашего здоровья</strong>
+            </div>
+            <p style="font-size: 14px; opacity: 0.9;">
+                Не пытайтесь искусственно изменять пульс! Это опасно для здоровья. 
+                Приложение помогает анализировать естественное состояние, а не достигать "идеальных" цифр.
+            </p>
         </div>
 
         <!-- Отображение пульса -->
@@ -282,11 +350,15 @@
             
             <div id="statusBadge" class="status-badge status-calm">СПОКОЙСТВИЕ</div>
             
+            <div class="health-message">
+                💚 Ваше здоровье важнее любой сделки
+            </div>
+            
             <div class="target-zones">
                 <div class="zone-card" id="zoneCalm">
                     <div>🎯 Целевой</div>
                     <div class="zone-value">60-75</div>
-                    <div>Идеально для сделок</div>
+                    <div>Естественное спокойствие</div>
                 </div>
                 <div class="zone-card" id="zoneStress">
                     <div>⚠️ Стресс</div>
@@ -296,7 +368,7 @@
                 <div class="zone-card" id="zonePanic">
                     <div>🚨 Паника</div>
                     <div class="zone-value">90+</div>
-                    <div>Не торгуйте!</div>
+                    <div>Отдохните от торговли</div>
                 </div>
             </div>
         </div>
@@ -308,7 +380,7 @@
                 <input type="number" class="heart-rate-input" id="heartRateInput" placeholder="65" min="40" max="180">
                 <button class="submit-btn" onclick="submitHeartRate()">OK</button>
             </div>
-            <p style="opacity: 0.8; font-size: 14px;">Измерьте пульс на часах и введите значение</p>
+            <p style="opacity: 0.8; font-size: 14px;">Измерьте пульс на часах и введите реальное значение</p>
         </div>
 
         <!-- Торговые действия -->
@@ -350,28 +422,70 @@
         <!-- Инсайты -->
         <div class="insights-section">
             <h3 style="margin-bottom: 15px;">💡 Ваши био-инсайты</h3>
+            
             <div class="insight-card">
-                <div>🎯 Идеальный пульс</div>
-                <div class="insight-value" id="idealHeartRate">-- уд/мин</div>
-                <div>При этом пульсе самая высокая прибыль</div>
+                <div>🎯 Лучшие результаты</div>
+                <div class="insight-value" id="bestPerformanceZone">-- -- уд/мин</div>
+                <div>Диапазон пульса с самыми успешными сделками</div>
             </div>
+            
             <div class="insight-card">
                 <div>📊 Рекорд спокойствия</div>
                 <div class="insight-value" id="calmRecord">-- уд/мин</div>
                 <div>Самый низкий пульс при успешной сделке</div>
             </div>
+            
             <div class="insight-card">
-                <div>⚡ Зона эффективности</div>
-                <div class="insight-value" id="efficiencyZone">-- -- уд/мин</div>
-                <div>Диапазон пульса с лучшими результатами</div>
+                <div>📈 Прогресс</div>
+                <div class="insight-value" id="progressScore">--%</div>
+                <div>Улучшение контроля эмоций за месяц</div>
+            </div>
+            
+            <div class="health-message">
+                🧘‍♂️ Стремитесь к естественному спокойствию, а не к цифрам
             </div>
         </div>
 
         <!-- График пульса -->
         <div class="status-card">
-            <h3 style="margin-bottom: 15px;">📊 График пульса</h3>
+            <h3 style="margin-bottom: 15px;">📊 История пульса</h3>
             <div class="chart-container">
                 <canvas id="heartRateChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Настройки и управление данными -->
+        <div class="settings-section">
+            <h3 style="margin-bottom: 15px;">⚙️ Управление данными</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <p style="opacity: 0.8; font-size: 14px; margin-bottom: 10px;">
+                    Все данные сохраняются автоматически. Вы можете очистить их, если хотите начать заново.
+                </p>
+                <div style="display: flex; gap: 10px;">
+                    <button class="danger-btn" onclick="showClearDataConfirm()">
+                        🗑️ Очистить все данные
+                    </button>
+                    <button class="action-btn" onclick="exportData()">
+                        📤 Экспорт
+                    </button>
+                </div>
+            </div>
+            
+            <div class="health-message">
+                💾 Данные сохраняются в вашем браузере
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения -->
+    <div id="confirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center;">
+        <div style="background: #2c5364; padding: 20px; border-radius: 15px; max-width: 300px; text-align: center;">
+            <h3 style="margin-bottom: 15px;">⚠️ Подтверждение</h3>
+            <p id="confirmMessage" style="margin-bottom: 20px;">Вы уверены, что хотите очистить все данные?</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="danger-btn" onclick="clearAllData()" style="flex: 1;">Да, очистить</button>
+                <button class="submit-btn" onclick="hideConfirmModal()" style="flex: 1;">Отмена</button>
             </div>
         </div>
     </div>
@@ -387,7 +501,6 @@
         let heartRateChart;
         let isRecording = false;
         let currentAction = '';
-        let tradeHistory = [];
 
         // Элементы DOM
         const heartRateValue = document.getElementById('heartRateValue');
@@ -395,19 +508,28 @@
         const heartRateInput = document.getElementById('heartRateInput');
         const avgHeartRate = document.getElementById('avgHeartRate');
         const disciplineScore = document.getElementById('disciplineScore');
-        const idealHeartRate = document.getElementById('idealHeartRate');
+        const bestPerformanceZone = document.getElementById('bestPerformanceZone');
         const calmRecord = document.getElementById('calmRecord');
-        const efficiencyZone = document.getElementById('efficiencyZone');
+        const progressScore = document.getElementById('progressScore');
 
         // Инициализация приложения
         function initializeApp() {
             setupHeartRateChart();
-            loadUserStats();
+            loadAllData();
             updateInsights();
             
             // Загрузка демо-данных при первом запуске
-            if (!localStorage.getItem('traderBioData')) {
+            if (!localStorage.getItem('appInitialized')) {
                 loadDemoData();
+                localStorage.setItem('appInitialized', 'true');
+            }
+            
+            // Показ предупреждения при первом запуске
+            if (!localStorage.getItem('healthWarningShown')) {
+                setTimeout(() => {
+                    showNotification('💚 Помните: ваше здоровье важнее любых торговых результатов!', 'warning');
+                    localStorage.setItem('healthWarningShown', 'true');
+                }, 2000);
             }
         }
 
@@ -462,13 +584,43 @@
             });
         }
 
+        // Загрузка всех данных
+        function loadAllData() {
+            // Загрузка истории пульса
+            const savedHeartRateData = localStorage.getItem('heartRateHistory');
+            if (savedHeartRateData) {
+                heartRateData = JSON.parse(savedHeartRateData);
+                updateChart();
+                
+                // Показать последний пульс
+                if (heartRateData.length > 0) {
+                    const lastRate = heartRateData[heartRateData.length - 1].rate;
+                    heartRateValue.textContent = lastRate;
+                    updateStatus(lastRate);
+                }
+            }
+            
+            loadUserStats();
+        }
+
+        // Сохранение всех данных
+        function saveAllData() {
+            localStorage.setItem('heartRateHistory', JSON.stringify(heartRateData));
+        }
+
         // Отправка пульса вручную
         function submitHeartRate() {
             const rate = parseInt(heartRateInput.value);
             
             if (isNaN(rate) || rate < 40 || rate > 180) {
-                showNotification('❌ Введите корректное значение пульса (40-180)');
+                showNotification('❌ Введите корректное значение пульса (40-180)', 'error');
                 return;
+            }
+            
+            // Проверка на резкие изменения (более 30 уд/мин за раз)
+            const lastRate = heartRateData.length > 0 ? heartRateData[heartRateData.length - 1].rate : rate;
+            if (Math.abs(rate - lastRate) > 30 && heartRateData.length > 0) {
+                showNotification('⚠️ Резкое изменение пульса! Убедитесь в правильности измерения', 'warning');
             }
             
             updateHeartRate(rate);
@@ -488,13 +640,15 @@
             const now = new Date();
             const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
             
-            if (heartRateData.length > 15) heartRateData.shift();
+            if (heartRateData.length > 20) heartRateData.shift();
             heartRateData.push({
                 rate: rate,
-                time: timeLabel
+                time: timeLabel,
+                timestamp: now.getTime()
             });
             
             updateChart();
+            saveAllData();
             
             // Если идет запись - сохраняем данные
             if (isRecording) {
@@ -543,13 +697,13 @@
         // Начало записи торгового действия
         function startRecording(action) {
             if (isRecording) {
-                showNotification('❌ Завершите текущую запись');
+                showNotification('❌ Завершите текущую запись', 'error');
                 return;
             }
             
             const currentRate = parseInt(heartRateValue.textContent);
             if (isNaN(currentRate)) {
-                showNotification('❌ Сначала введите текущий пульс');
+                showNotification('❌ Сначала введите текущий пульс', 'error');
                 return;
             }
             
@@ -595,7 +749,7 @@
             updateInsights();
         }
 
-        // Сохранение данных пульса
+        // Сохранение данных пульса для сделки
         function saveHeartRateData(rate, action) {
             const data = {
                 action: action,
@@ -616,7 +770,6 @@
                     action: baseAction,
                     heartRate: rate,
                     timestamp: new Date().toISOString(),
-                    // В реальном приложении здесь будут данные о прибыльности сделки
                     profitable: Math.random() > 0.3 // Демо-данные
                 };
                 
@@ -651,17 +804,21 @@
             loadUserStats();
         }
 
-        // Обновление инсайтов
+        // Обновление инсайтов (безопасная версия)
         function updateInsights() {
             const tradeHistory = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
+            const heartRateHistory = JSON.parse(localStorage.getItem('heartRateHistory') || '[]');
             
             if (tradeHistory.length > 0) {
-                // Идеальный пульс (самый прибыльный)
+                // Лучшая зона эффективности (без указания "идеального" пульса)
                 const profitableTrades = tradeHistory.filter(t => t.profitable);
-                if (profitableTrades.length > 0) {
+                if (profitableTrades.length > 1) {
                     const heartRates = profitableTrades.map(t => t.heartRate);
-                    const idealRate = Math.round(heartRates.reduce((a, b) => a + b, 0) / heartRates.length);
-                    idealHeartRate.textContent = `${idealRate} уд/мин`;
+                    const minRate = Math.min(...heartRates);
+                    const maxRate = Math.max(...heartRates);
+                    bestPerformanceZone.textContent = `${minRate}-${maxRate} уд/мин`;
+                } else {
+                    bestPerformanceZone.textContent = "65-75 уд/мин";
                 }
                 
                 // Рекорд спокойствия
@@ -669,23 +826,42 @@
                 if (successfulTrades.length > 0) {
                     const minHeartRate = Math.min(...successfulTrades.map(t => t.heartRate));
                     calmRecord.textContent = `${minHeartRate} уд/мин`;
+                } else {
+                    calmRecord.textContent = "-- уд/мин";
                 }
                 
-                // Зона эффективности
-                const allHeartRates = tradeHistory.map(t => t.heartRate);
-                if (allHeartRates.length > 0) {
-                    const avg = allHeartRates.reduce((a, b) => a + b, 0) / allHeartRates.length;
-                    efficiencyZone.textContent = `${Math.round(avg - 5)}-${Math.round(avg + 5)} уд/мин`;
+                // Прогресс (сравнение с предыдущим периодом)
+                if (tradeHistory.length > 5) {
+                    const recentTrades = tradeHistory.slice(-5);
+                    const calmRecent = recentTrades.filter(t => t.heartRate <= 75).length;
+                    progressScore.textContent = `${Math.round((calmRecent / 5) * 100)}%`;
+                } else {
+                    progressScore.textContent = "--%";
                 }
             } else {
-                idealHeartRate.textContent = "68 уд/мин";
-                calmRecord.textContent = "62 уд/мин";
-                efficiencyZone.textContent = "65-75 уд/мин";
+                bestPerformanceZone.textContent = "65-75 уд/мин";
+                calmRecord.textContent = "-- уд/мин";
+                progressScore.textContent = "--%";
             }
         }
 
         // Загрузка демо-данных
         function loadDemoData() {
+            const now = new Date();
+            
+            // Демо-данные пульса
+            for (let i = 0; i < 10; i++) {
+                const time = new Date(now.getTime() - (10 - i) * 600000);
+                heartRateData.push({
+                    rate: 65 + Math.floor(Math.random() * 10),
+                    time: `${time.getHours()}:${time.getMinutes().toString().padStart(2, '0')}`,
+                    timestamp: time.getTime()
+                });
+            }
+            
+            saveAllData();
+            
+            // Демо-данные сделок
             const demoData = [
                 { action: 'entry', heartRate: 68, timestamp: new Date(Date.now() - 3600000).toISOString(), status: 'calm' },
                 { action: 'exit', heartRate: 72, timestamp: new Date(Date.now() - 1800000).toISOString(), status: 'calm' },
@@ -701,6 +877,62 @@
             ];
             
             localStorage.setItem('tradeHistory', JSON.stringify(demoTrades));
+        }
+
+        // Управление данными
+        function showClearDataConfirm() {
+            document.getElementById('confirmMessage').textContent = 'Вы уверены, что хотите очистить все данные? Это действие нельзя отменить.';
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function hideConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function clearAllData() {
+            localStorage.clear();
+            heartRateData = [];
+            heartRateChart.data.labels = [];
+            heartRateChart.data.datasets[0].data = [];
+            heartRateChart.update();
+            
+            heartRateValue.textContent = '--';
+            statusBadge.textContent = 'СПОКОЙСТВИЕ';
+            statusBadge.className = 'status-badge status-calm';
+            
+            avgHeartRate.textContent = '--';
+            disciplineScore.textContent = '--%';
+            bestPerformanceZone.textContent = '-- -- уд/мин';
+            calmRecord.textContent = '-- уд/мин';
+            progressScore.textContent = '--%';
+            
+            hideConfirmModal();
+            showNotification('✅ Все данные очищены');
+            
+            // Перезагрузка демо-данных
+            setTimeout(() => {
+                loadDemoData();
+                loadAllData();
+                updateInsights();
+            }, 1000);
+        }
+
+        function exportData() {
+            const data = {
+                heartRateHistory: heartRateData,
+                tradeData: JSON.parse(localStorage.getItem('traderBioData') || '[]'),
+                tradeHistory: JSON.parse(localStorage.getItem('tradeHistory') || '[]')
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'trademate_data.json';
+            link.click();
+            
+            showNotification('📤 Данные экспортированы');
         }
 
         // Вспомогательные функции
@@ -730,9 +962,9 @@
             return 'panic';
         }
 
-        function showNotification(message) {
+        function showNotification(message, type = 'normal') {
             const notification = document.createElement('div');
-            notification.className = 'notification';
+            notification.className = `notification ${type === 'warning' ? 'warning' : ''} ${type === 'error' ? 'error' : ''}`;
             notification.textContent = message;
             
             document.body.appendChild(notification);
