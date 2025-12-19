@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeMate - Био-трекер трейдера</title>
+    <title>TradeMate - Временное обновление</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -18,631 +17,546 @@
             background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             color: white;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .container {
             max-width: 100%;
-            padding: 15px;
-            transition: transform 0.3s ease;
-        }
-
-        .container.menu-open {
-            transform: translateX(250px);
-        }
-
-        /* Стили для меню */
-        .menu-btn {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 1001;
-            backdrop-filter: blur(10px);
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -250px;
-            width: 250px;
-            height: 100%;
-            background: #1a2a32;
-            transition: left 0.3s ease;
-            z-index: 1000;
-            overflow-y: auto;
-            padding: 60px 15px 20px 15px;
-        }
-
-        .sidebar.open {
-            left: 0;
-        }
-
-        .sidebar-section {
-            margin-bottom: 25px;
-        }
-
-        .sidebar-section h3 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #4CAF50;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 8px;
-        }
-
-        .stat-item {
-            background: rgba(255,255,255,0.1);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .stat-value {
-            font-weight: bold;
-            color: #ff6b6b;
-            float: right;
-        }
-
-        .custom-event-input {
-            width: 100%;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 8px;
-            padding: 10px;
-            color: white;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .custom-event-input::placeholder {
-            color: rgba(255,255,255,0.6);
-        }
-
-        .add-custom-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        .header {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
             text-align: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            margin-top: 10px;
+            position: relative;
         }
 
-        .header h1 {
-            font-size: 22px;
-            margin-bottom: 5px;
+        .construction-animation {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 30px;
+        }
+
+        .crane {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 100px;
+        }
+
+        .crane-body {
+            position: absolute;
+            width: 20px;
+            height: 60px;
+            background: #ff9800;
+            border-radius: 5px;
+            top: 0;
+            left: 30px;
+        }
+
+        .crane-arm {
+            position: absolute;
+            width: 80px;
+            height: 10px;
+            background: #ff9800;
+            border-radius: 5px;
+            top: 20px;
+            left: -30px;
+            animation: craneSwing 3s ease-in-out infinite;
+            transform-origin: right center;
+        }
+
+        .crane-cable {
+            position: absolute;
+            width: 4px;
+            height: 40px;
+            background: #ff9800;
+            left: 10px;
+            top: 30px;
+            animation: cableSwing 3s ease-in-out infinite;
+        }
+
+        .crane-hook {
+            position: absolute;
+            width: 15px;
+            height: 8px;
+            background: #ff5722;
+            border-radius: 2px;
+            bottom: -5px;
+            left: 2px;
+        }
+
+        .building {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 60px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+        }
+
+        .window {
+            position: absolute;
+            width: 15px;
+            height: 20px;
+            background: #ffeb3b;
+            border-radius: 3px;
+            animation: windowGlow 2s infinite alternate;
+        }
+
+        .window:nth-child(1) { top: 10px; left: 15px; }
+        .window:nth-child(2) { top: 10px; right: 15px; }
+        .window:nth-child(3) { bottom: 10px; left: 15px; }
+        .window:nth-child(4) { bottom: 10px; right: 15px; }
+
+        @keyframes craneSwing {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        @keyframes cableSwing {
+            0%, 100% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+        }
+
+        @keyframes windowGlow {
+            0% { opacity: 0.3; box-shadow: 0 0 5px #ffeb3b; }
+            100% { opacity: 1; box-shadow: 0 0 20px #ffeb3b; }
+        }
+
+        .main-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #4CAF50, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            max-width: 500px;
+            line-height: 1.5;
         }
 
         .status-card {
             background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2);
+            max-width: 400px;
+            width: 100%;
         }
 
-        .heart-rate-display {
+        .progress-section {
+            margin: 25px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #2196F3);
+            border-radius: 4px;
+            width: 75%;
+            animation: progressPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 12px;
             text-align: center;
-            font-size: 48px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .feature-text {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .countdown-item {
+            text-align: center;
+        }
+
+        .countdown-number {
+            font-size: 28px;
             font-weight: bold;
-            margin: 15px 0;
-            color: #ff6b6b;
+            background: rgba(255,255,255,0.1);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            margin-bottom: 5px;
         }
 
-        .heart-rate-value {
-            font-size: 64px;
-            text-shadow: 0 0 20px rgba(255,107,107,0.5);
+        .countdown-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
         }
 
-        .pulse-animation {
-            animation: pulse 1s infinite;
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 8px 15px;
-            border-radius: 20px;
+        .btn {
+            padding: 12px 25px;
+            border-radius: 25px;
+            border: none;
             font-size: 14px;
             font-weight: 600;
-            margin: 5px 0;
-        }
-
-        .status-calm {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .status-stress {
-            background: #ff9800;
-            color: white;
-        }
-
-        .status-panic {
-            background: #f44336;
-            color: white;
-        }
-
-        .target-zones {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .zone-card {
-            background: rgba(255,255,255,0.15);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .zone-card.active {
-            border: 2px solid #4CAF50;
-            background: rgba(76,175,80,0.2);
-        }
-
-        .zone-value {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 5px 0;
-        }
-
-        .trading-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .custom-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .action-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-
-        .action-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
-
-        .action-btn.recording {
-            background: #f44336;
-            animation: recordingPulse 1s infinite;
-        }
-
-        @keyframes recordingPulse {
-            0% { box-shadow: 0 0 0 0 rgba(244,67,54,0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(244,67,54,0); }
-            100% { box-shadow: 0 0 0 0 rgba(244,67,54,0); }
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .stat-card {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 5px 0;
-        }
-
-        .chart-container {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 15px;
-            margin: 15px 0;
-            height: 200px;
-        }
-
-        .manual-input-section {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-
-        .input-group {
             display: flex;
-            gap: 10px;
-            margin: 15px 0;
+            align-items: center;
+            gap: 8px;
+            min-width: 150px;
+            justify-content: center;
         }
 
-        .heart-rate-input {
-            flex: 1;
-            background: rgba(255,255,255,0.15);
+        .btn-primary {
+            background: linear-gradient(45deg, #2196F3, #4CAF50);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(33,150,243,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
             border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 12px;
-            padding: 12px 15px;
-            color: white;
-            font-size: 16px;
-            text-align: center;
         }
 
-        .heart-rate-input::placeholder {
-            color: rgba(255,255,255,0.6);
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
         }
 
-        .submit-btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .submit-btn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-        }
-
-        .insights-section {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-
-        .insight-card {
-            background: rgba(255,255,255,0.15);
-            padding: 15px;
-            border-radius: 12px;
-            margin: 10px 0;
-        }
-
-        .insight-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #4CAF50;
-            margin: 5px 0;
-        }
-
-        .warning-section {
-            background: rgba(255,193,7,0.2);
-            border: 1px solid rgba(255,193,7,0.5);
-            border-radius: 15px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-
-        .warning-icon {
-            font-size: 24px;
-            margin-right: 10px;
-        }
-
-        .settings-section {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-
-        .danger-btn {
-            background: rgba(244,67,54,0.3);
-            color: white;
-            border: 1px solid rgba(244,67,54,0.5);
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin: 10px 0;
-            transition: all 0.3s ease;
-        }
-
-        .danger-btn:hover {
-            background: rgba(244,67,54,0.5);
-            transform: translateY(-2px);
-        }
-
-        .notification {
+        .notification-badge {
             position: fixed;
             top: 20px;
+            right: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .easter-egg {
+            position: absolute;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: #4CAF50;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 25px;
+            opacity: 0.3;
+            font-size: 12px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .easter-egg:hover {
+            opacity: 1;
+        }
+
+        .hidden-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 30px;
+            border-radius: 20px;
             z-index: 1000;
-            animation: slideDown 0.3s ease;
-        }
-
-        .notification.warning {
-            background: #ff9800;
-        }
-
-        .notification.error {
-            background: #f44336;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
-            to { transform: translateX(-50%) translateY(0); opacity: 1; }
-        }
-
-        .health-message {
-            background: rgba(76,175,80,0.2);
-            border: 1px solid rgba(76,175,80,0.5);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 10px 0;
-            font-size: 14px;
+            display: none;
+            max-width: 300px;
             text-align: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid #4CAF50;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 20px;
-            opacity: 0.7;
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .floating-element {
+            position: absolute;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            font-size: 20px;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            top: 15%;
+            right: 10%;
+            font-size: 24px;
+            animation-delay: 1s;
+        }
+
+        .floating-element:nth-child(3) {
+            bottom: 20%;
+            left: 15%;
+            font-size: 18px;
+            animation-delay: 2s;
+        }
+
+        .floating-element:nth-child(4) {
+            bottom: 10%;
+            right: 5%;
+            font-size: 22px;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .lang-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
             font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
-    <!-- Кнопка меню -->
-    <button class="menu-btn" onclick="toggleMenu()">☰</button>
-
-    <!-- Боковое меню -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-section">
-            <h3>📊 Статистика по сделкам</h3>
-            <div id="tradingStats">
-                <div class="empty-state">Нет данных о сделках</div>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>🎯 Пользовательские события</h3>
-            <input type="text" class="custom-event-input" id="customEventInput" placeholder="Название события">
-            <button class="add-custom-btn" onclick="addCustomEvent()">+ Добавить</button>
-            <div id="customEventsList">
-                <div class="empty-state">Нет пользовательских событий</div>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>📈 Общая статистика</h3>
-            <div class="stat-item">
-                Всего записей: <span class="stat-value" id="totalRecords">0</span>
-            </div>
-            <div class="stat-item">
-                Средний пульс: <span class="stat-value" id="overallAvgRate">--</span>
-            </div>
-            <div class="stat-item">
-                Спокойных: <span class="stat-value" id="calmPercentage">--%</span>
-            </div>
-        </div>
+    <div class="language-switcher">
+        <button class="lang-btn" onclick="switchLanguage('ru')">🇷🇺 RU</button>
+        <button class="lang-btn" onclick="switchLanguage('en')">🇺🇸 EN</button>
     </div>
 
-    <!-- Основной контент -->
-    <div class="container" id="mainContainer">
-        <div class="header">
-            <h1>💓 Био-трекер трейдера</h1>
-            <p>Контролируйте эмоции через пульс</p>
+    <div class="notification-badge">🚧 Обновление в процессе</div>
+
+    <div class="floating-element">💡</div>
+    <div class="floating-element">⚡</div>
+    <div class="floating-element">🎯</div>
+    <div class="floating-element">📈</div>
+
+    <div class="container">
+        <div class="construction-animation">
+            <div class="crane">
+                <div class="crane-body"></div>
+                <div class="crane-arm"></div>
+                <div class="crane-cable">
+                    <div class="crane-hook"></div>
+                </div>
+            </div>
+            <div class="building">
+                <div class="window"></div>
+                <div class="window"></div>
+                <div class="window"></div>
+                <div class="window"></div>
+            </div>
         </div>
 
-        <!-- Предупреждение о здоровье -->
-        <div class="warning-section">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <span class="warning-icon">⚠️</span>
-                <strong>Важно для вашего здоровья</strong>
+        <h1 class="main-title" id="mainTitle">🚧 Приложение на обновлении</h1>
+        <p class="subtitle" id="subtitle">
+            Мы активно работаем над улучшением TradeMate. В новой версии вас ждут:
+            расширенная аналитика пульса, интеграция с Apple Watch и многое другое!
+        </p>
+
+        <div class="status-card">
+            <h2 id="statusTitle">📊 Статус разработки</h2>
+            
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span id="progressText">Обновление системы отслеживания</span>
+                    <span>75%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
             </div>
-            <p style="font-size: 14px; opacity: 0.9;">
-                Не пытайтесь искусственно изменять пульс! Это опасно для здоровья. 
-                Приложение помогает анализировать естественное состояние, а не достигать "идеальных" цифр.
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">💓</span>
+                    <div class="feature-text" id="feature1">Точный мониторинг пульса</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-text" id="feature2">Расширенная аналитика</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">⌚</span>
+                    <div class="feature-text" id="feature3">Интеграция с часами</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🤖</span>
+                    <div class="feature-text" id="feature4">AI-рекомендации</div>
+                </div>
+            </div>
+
+            <div class="countdown">
+                <div class="countdown-item">
+                    <div class="countdown-number" id="days">07</div>
+                    <div class="countdown-label" id="daysLabel">дней</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-number" id="hours">14</div>
+                    <div class="countdown-label" id="hoursLabel">часов</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-number" id="minutes">32</div>
+                    <div class="countdown-label" id="minutesLabel">минут</div>
+                </div>
+            </div>
+
+            <p style="font-size: 14px; opacity: 0.7; margin-top: 20px;" id="estimatedTime">
+                Примерное время запуска: 1 февраля 2024
             </p>
         </div>
 
-        <!-- Отображение пульса -->
-        <div class="status-card">
-            <div class="heart-rate-display">
-                <div class="heart-rate-value" id="heartRateValue">--</div>
-                <div>уд/мин</div>
-            </div>
-            
-            <div id="statusBadge" class="status-badge status-calm">СПОКОЙСТВИЕ</div>
-            
-            <div class="health-message">
-                💚 Ваше здоровье важнее любой сделки
-            </div>
-            
-            <div class="target-zones">
-                <div class="zone-card" id="zoneCalm">
-                    <div>🎯 Целевой</div>
-                    <div class="zone-value">60-75</div>
-                    <div>Естественное спокойствие</div>
-                </div>
-                <div class="zone-card" id="zoneStress">
-                    <div>⚠️ Стресс</div>
-                    <div class="zone-value">76-90</div>
-                    <div>Будьте осторожны</div>
-                </div>
-                <div class="zone-card" id="zonePanic">
-                    <div>🚨 Паника</div>
-                    <div class="zone-value">90+</div>
-                    <div>Отдохните от торговли</div>
-                </div>
-            </div>
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="notifyMe()">
+                🔔 Уведомить о запуске
+            </button>
+            <button class="btn btn-secondary" onclick="showRoadmap()">
+                🗺️ Посмотреть план
+            </button>
+            <button class="btn btn-secondary" onclick="contactSupport()">
+                💬 Связаться с поддержкой
+            </button>
         </div>
 
-        <!-- Ручной ввод пульса -->
-        <div class="manual-input-section">
-            <h3 style="margin-bottom: 15px;">📝 Введите текущий пульс</h3>
-            <div class="input-group">
-                <input type="number" class="heart-rate-input" id="heartRateInput" placeholder="65" min="40" max="180">
-                <button class="submit-btn" onclick="submitHeartRate()">OK</button>
-            </div>
-            <p style="opacity: 0.8; font-size: 14px;">Измерьте пульс на часах и введите реальное значение</p>
+        <div class="social-links">
+            <div class="social-icon" onclick="openSocial('tg')">📱</div>
+            <div class="social-icon" onclick="openSocial('github')">💻</div>
+            <div class="social-icon" onclick="openSocial('twitter')">🐦</div>
+            <div class="social-icon" onclick="openSocial('mail')">✉️</div>
         </div>
 
-        <!-- Торговые действия -->
-        <div class="status-card">
-            <h3 style="margin-bottom: 15px;">📊 Запись торговых действий</h3>
-            <div class="trading-actions">
-                <button class="action-btn" onclick="startRecording('entry')">
-                    🟢 Вход в сделку
-                </button>
-                <button class="action-btn" onclick="startRecording('exit')">
-                    🔴 Выход из сделки
-                </button>
-                <button class="action-btn" onclick="startRecording('breakeven')">
-                    ⚫ Безубыток
-                </button>
-                <button class="action-btn" onclick="startRecording('stop_loss')">
-                    💔 Стоп-лосс
-                </button>
-                <button class="action-btn" onclick="startRecording('take_profit')">
-                    💰 Тейк-профит
-                </button>
-                <button class="action-btn" onclick="startRecording('trailing_stop')">
-                    📈 Трейлинг-стоп
-                </button>
-            </div>
-        </div>
-
-        <!-- Пользовательские действия -->
-        <div class="status-card" id="customActionsSection" style="display: none;">
-            <h3 style="margin-bottom: 15px;">⭐ Пользовательские события</h3>
-            <div class="custom-actions" id="customActions">
-                <!-- Динамически добавляемые кнопки -->
-            </div>
-        </div>
-
-        <!-- Статистика -->
-        <div class="status-card">
-            <h3 style="margin-bottom: 15px;">📈 Ваша био-статистика</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div>Средний пульс</div>
-                    <div class="stat-value" id="avgHeartRate">--</div>
-                    <div>при входе</div>
-                </div>
-                <div class="stat-card">
-                    <div>Дисциплина</div>
-                    <div class="stat-value" id="disciplineScore">--%</div>
-                    <div>спокойных сделок</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Инсайты -->
-        <div class="insights-section">
-            <h3 style="margin-bottom: 15px;">💡 Ваши био-инсайты</h3>
-            
-            <div class="insight-card">
-                <div>🎯 Лучшие результаты</div>
-                <div class="insight-value" id="bestPerformanceZone">-- -- уд/мин</div>
-                <div>Диапазон пульса с самыми успешными сделками</div>
-            </div>
-            
-            <div class="insight-card">
-                <div>📊 Рекорд спокойствия</div>
-                <div class="insight-value" id="calmRecord">-- уд/мин</div>
-                <div>Самый низкий пульс при успешной сделке</div>
-            </div>
-            
-            <div class="insight-card">
-                <div>📈 Прогресс</div>
-                <div class="insight-value" id="progressScore">--%</div>
-                <div>Улучшение контроля эмоций</div>
-            </div>
-            
-            <div class="health-message">
-                🧘‍♂️ Стремитесь к естественному спокойствию, а не к цифрам
-            </div>
-        </div>
-
-        <!-- График пульса -->
-        <div class="status-card">
-            <h3 style="margin-bottom: 15px;">📊 История пульса</h3>
-            <div class="chart-container">
-                <canvas id="heartRateChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Настройки и управление данными -->
-        <div class="settings-section">
-            <h3 style="margin-bottom: 15px;">⚙️ Управление данными</h3>
-            
-            <div style="margin-bottom: 15px;">
-                <p style="opacity: 0.8; font-size: 14px; margin-bottom: 10px;">
-                    Все данные сохраняются автоматически. Вы можете очистить их, если хотите начать заново.
-                </p>
-                <div style="display: flex; gap: 10px;">
-                    <button class="danger-btn" onclick="showClearDataConfirm()">
-                        🗑️ Очистить все данные
-                    </button>
-                    <button class="action-btn" onclick="exportData()">
-                        📤 Экспорт
-                    </button>
-                </div>
-            </div>
-            
-            <div class="health-message">
-                💾 Данные сохраняются в вашем браузере
-            </div>
+        <div class="easter-egg" onclick="showEasterEgg()">
+            Нашли пасхалку? Кликните сюда!
         </div>
     </div>
 
-    <!-- Модальное окно подтверждения -->
-    <div id="confirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center;">
-        <div style="background: #2c5364; padding: 20px; border-radius: 15px; max-width: 300px; text-align: center;">
-            <h3 style="margin-bottom: 15px;">⚠️ Подтверждение</h3>
-            <p id="confirmMessage" style="margin-bottom: 20px;">Вы уверены, что хотите очистить все данные?</p>
-            <div style="display: flex; gap: 10px;">
-                <button class="danger-btn" onclick="clearAllData()" style="flex: 1;">Да, очистить</button>
-                <button class="submit-btn" onclick="hideConfirmModal()" style="flex: 1;">Отмена</button>
-            </div>
-        </div>
+    <!-- Скрытое сообщение -->
+    <div class="hidden-message" id="hiddenMessage">
+        <button class="close-btn" onclick="closeMessage()">×</button>
+        <h3 style="color: #4CAF50; margin-bottom: 15px;">🎉 Секретная находка!</h3>
+        <p id="secretText">Спасибо, что заглянули сюда! Вы одни из первых, кто увидит новую версию TradeMate.</p>
+        <p style="margin-top: 15px; font-size: 14px; opacity: 0.7;">Ваш секретный код: <strong>TRADEMATE2024</strong></p>
     </div>
 
     <script>
@@ -651,602 +565,256 @@
         tg.expand();
         tg.ready();
 
-        // Глобальные переменные
-        let heartRateData = [];
-        let heartRateChart;
-        let isRecording = false;
-        let currentAction = '';
-        let customEvents = [];
+        // Тексты для перевода
+        const texts = {
+            ru: {
+                mainTitle: "🚧 Приложение на обновлении",
+                subtitle: "Мы активно работаем над улучшением TradeMate. В новой версии вас ждут: расширенная аналитика пульса, интеграция с Apple Watch и многое другое!",
+                statusTitle: "📊 Статус разработки",
+                progressText: "Обновление системы отслеживания",
+                feature1: "Точный мониторинг пульса",
+                feature2: "Расширенная аналитика",
+                feature3: "Интеграция с часами",
+                feature4: "AI-рекомендации",
+                daysLabel: "дней",
+                hoursLabel: "часов",
+                minutesLabel: "минут",
+                estimatedTime: "Примерное время запуска: 1 февраля 2024",
+                notifyMe: "🔔 Уведомить о запуске",
+                showRoadmap: "🗺️ Посмотреть план",
+                contactSupport: "💬 Связаться с поддержкой",
+                secretText: "Спасибо, что заглянули сюда! Вы одни из первых, кто увидит новую версию TradeMate."
+            },
+            en: {
+                mainTitle: "🚧 App Under Maintenance",
+                subtitle: "We're actively working on improving TradeMate. The new version will feature: advanced pulse analytics, Apple Watch integration, and much more!",
+                statusTitle: "📊 Development Status",
+                progressText: "Updating tracking system",
+                feature1: "Accurate pulse monitoring",
+                feature2: "Advanced analytics",
+                feature3: "Watch integration",
+                feature4: "AI recommendations",
+                daysLabel: "days",
+                hoursLabel: "hours",
+                minutesLabel: "minutes",
+                estimatedTime: "Estimated launch: February 1, 2024",
+                notifyMe: "🔔 Notify on launch",
+                showRoadmap: "🗺️ View roadmap",
+                contactSupport: "💬 Contact support",
+                secretText: "Thanks for checking this out! You're among the first to see the new version of TradeMate."
+            }
+        };
 
-        // Элементы DOM
-        const heartRateValue = document.getElementById('heartRateValue');
-        const statusBadge = document.getElementById('statusBadge');
-        const heartRateInput = document.getElementById('heartRateInput');
-        const avgHeartRate = document.getElementById('avgHeartRate');
-        const disciplineScore = document.getElementById('disciplineScore');
-        const bestPerformanceZone = document.getElementById('bestPerformanceZone');
-        const calmRecord = document.getElementById('calmRecord');
-        const progressScore = document.getElementById('progressScore');
-        const sidebar = document.getElementById('sidebar');
-        const mainContainer = document.getElementById('mainContainer');
+        // Текущий язык
+        let currentLang = 'ru';
 
-        // Инициализация приложения
-        function initializeApp() {
-            setupHeartRateChart();
-            loadAllData();
-            updateInsights();
-            updateSidebarStats();
-            loadCustomEvents();
+        // Переключение языка
+        function switchLanguage(lang) {
+            currentLang = lang;
+            updateTexts();
+        }
+
+        // Обновление текстов
+        function updateTexts() {
+            const langTexts = texts[currentLang];
             
-            // Показ предупреждения при первом запуске
-            if (!localStorage.getItem('healthWarningShown')) {
-                setTimeout(() => {
-                    showNotification('💚 Помните: ваше здоровье важнее любых торговых результатов!', 'warning');
-                    localStorage.setItem('healthWarningShown', 'true');
-                }, 2000);
+            document.getElementById('mainTitle').textContent = langTexts.mainTitle;
+            document.getElementById('subtitle').textContent = langTexts.subtitle;
+            document.getElementById('statusTitle').textContent = langTexts.statusTitle;
+            document.getElementById('progressText').textContent = langTexts.progressText;
+            document.getElementById('feature1').textContent = langTexts.feature1;
+            document.getElementById('feature2').textContent = langTexts.feature2;
+            document.getElementById('feature3').textContent = langTexts.feature3;
+            document.getElementById('feature4').textContent = langTexts.feature4;
+            document.getElementById('daysLabel').textContent = langTexts.daysLabel;
+            document.getElementById('hoursLabel').textContent = langTexts.hoursLabel;
+            document.getElementById('minutesLabel').textContent = langTexts.minutesLabel;
+            document.getElementById('estimatedTime').textContent = langTexts.estimatedTime;
+            document.getElementById('secretText').textContent = langTexts.secretText;
+            
+            // Обновление кнопок
+            const buttons = document.querySelectorAll('.btn');
+            buttons[0].innerHTML = langTexts.notifyMe;
+            buttons[1].innerHTML = langTexts.showRoadmap;
+            buttons[2].innerHTML = langTexts.contactSupport;
+        }
+
+        // Обратный отсчет
+        function updateCountdown() {
+            const targetDate = new Date('2024-02-01T00:00:00').getTime();
+            const now = new Date().getTime();
+            const difference = targetDate - now;
+
+            if (difference > 0) {
+                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+
+                document.getElementById('days').textContent = days.toString().padStart(2, '0');
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
             }
         }
 
-        // Управление меню
-        function toggleMenu() {
-            sidebar.classList.toggle('open');
-            mainContainer.classList.toggle('menu-open');
-        }
-
-        // Настройка графика
-        function setupHeartRateChart() {
-            const ctx = document.getElementById('heartRateChart').getContext('2d');
-            heartRateChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Пульс',
-                        data: [],
-                        borderColor: '#ff6b6b',
-                        backgroundColor: 'rgba(255,107,107,0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            min: 50,
-                            max: 120,
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'white'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Загрузка всех данных
-        function loadAllData() {
-            // Загрузка истории пульса
-            const savedHeartRateData = localStorage.getItem('heartRateHistory');
-            if (savedHeartRateData) {
-                heartRateData = JSON.parse(savedHeartRateData);
-                updateChart();
-                
-                // Показать последний пульс
-                if (heartRateData.length > 0) {
-                    const lastRate = heartRateData[heartRateData.length - 1].rate;
-                    heartRateValue.textContent = lastRate;
-                    updateStatus(lastRate);
-                }
-            }
+        // Уведомить о запуске
+        function notifyMe() {
+            showNotification(currentLang === 'ru' 
+                ? '✅ Вы будете уведомлены о запуске!' 
+                : '✅ You will be notified on launch!');
             
-            loadUserStats();
-        }
-
-        // Загрузка пользовательских событий
-        function loadCustomEvents() {
-            const savedEvents = localStorage.getItem('customEvents');
-            if (savedEvents) {
-                customEvents = JSON.parse(savedEvents);
-                updateCustomEventsUI();
-            }
-        }
-
-        // Обновление UI пользовательских событий
-        function updateCustomEventsUI() {
-            const customActionsContainer = document.getElementById('customActions');
-            const customSection = document.getElementById('customActionsSection');
+            // Анимация кнопки
+            const btn = event.target;
+            btn.innerHTML = currentLang === 'ru' ? '🎉 Отлично!' : '🎉 Great!';
+            btn.style.background = 'linear-gradient(45deg, #4CAF50, #8BC34A)';
             
-            if (customEvents.length > 0) {
-                customSection.style.display = 'block';
-                customActionsContainer.innerHTML = '';
-                
-                customEvents.forEach((event, index) => {
-                    const button = document.createElement('button');
-                    button.className = 'action-btn';
-                    button.innerHTML = `⭐ ${event.name}`;
-                    button.onclick = () => startRecording(`custom_${event.id}`);
-                    customActionsContainer.appendChild(button);
-                });
-            } else {
-                customSection.style.display = 'none';
-            }
-        }
-
-        // Добавление пользовательского события
-        function addCustomEvent() {
-            const input = document.getElementById('customEventInput');
-            const eventName = input.value.trim();
-            
-            if (!eventName) {
-                showNotification('❌ Введите название события', 'error');
-                return;
-            }
-            
-            if (eventName.length > 20) {
-                showNotification('❌ Название слишком длинное', 'error');
-                return;
-            }
-            
-            const newEvent = {
-                id: Date.now().toString(),
-                name: eventName,
-                createdAt: new Date().toISOString()
-            };
-            
-            customEvents.push(newEvent);
-            localStorage.setItem('customEvents', JSON.stringify(customEvents));
-            
-            input.value = '';
-            updateCustomEventsUI();
-            updateSidebarStats();
-            showNotification('✅ Событие добавлено');
-        }
-
-        // Сохранение всех данных
-        function saveAllData() {
-            localStorage.setItem('heartRateHistory', JSON.stringify(heartRateData));
-        }
-
-        // Отправка пульса вручную
-        function submitHeartRate() {
-            const rate = parseInt(heartRateInput.value);
-            
-            if (isNaN(rate) || rate < 40 || rate > 180) {
-                showNotification('❌ Введите корректное значение пульса (40-180)', 'error');
-                return;
-            }
-            
-            // Проверка на резкие изменения (более 30 уд/мин за раз)
-            const lastRate = heartRateData.length > 0 ? heartRateData[heartRateData.length - 1].rate : rate;
-            if (Math.abs(rate - lastRate) > 30 && heartRateData.length > 0) {
-                showNotification('⚠️ Резкое изменение пульса! Убедитесь в правильности измерения', 'warning');
-            }
-            
-            updateHeartRate(rate);
-            heartRateInput.value = '';
-            showNotification('✅ Пульс обновлен');
-        }
-
-        // Обновление отображения пульса
-        function updateHeartRate(rate) {
-            heartRateValue.textContent = rate;
-            heartRateValue.className = 'heart-rate-value pulse-animation';
-            
-            // Обновление статуса
-            updateStatus(rate);
-            
-            // Добавление данных в график
-            const now = new Date();
-            const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-            
-            if (heartRateData.length > 20) heartRateData.shift();
-            heartRateData.push({
-                rate: rate,
-                time: timeLabel,
-                timestamp: now.getTime()
-            });
-            
-            updateChart();
-            saveAllData();
-            
-            // Если идет запись - сохраняем данные
-            if (isRecording) {
-                saveHeartRateData(rate, currentAction);
-            }
-        }
-
-        // Обновление статуса на основе пульса
-        function updateStatus(heartRate) {
-            let status, badgeClass, zoneActive;
-            
-            if (heartRate <= 75) {
-                status = 'СПОКОЙСТВИЕ';
-                badgeClass = 'status-calm';
-                zoneActive = 'zoneCalm';
-            } else if (heartRate <= 90) {
-                status = 'СТРЕСС';
-                badgeClass = 'status-stress';
-                zoneActive = 'zoneStress';
-            } else {
-                status = 'ПАНИКА';
-                badgeClass = 'status-panic';
-                zoneActive = 'zonePanic';
-            }
-            
-            statusBadge.textContent = status;
-            statusBadge.className = `status-badge ${badgeClass}`;
-            
-            // Подсветка активной зоны
-            document.querySelectorAll('.zone-card').forEach(zone => {
-                zone.classList.remove('active');
-            });
-            document.getElementById(zoneActive).classList.add('active');
-        }
-
-        // Обновление графика
-        function updateChart() {
-            const labels = heartRateData.map(item => item.time);
-            const data = heartRateData.map(item => item.rate);
-            
-            heartRateChart.data.labels = labels;
-            heartRateChart.data.datasets[0].data = data;
-            heartRateChart.update();
-        }
-
-        // Начало записи торгового действия
-        function startRecording(action) {
-            if (isRecording) {
-                showNotification('❌ Завершите текущую запись', 'error');
-                return;
-            }
-            
-            const currentRate = parseInt(heartRateValue.textContent);
-            if (isNaN(currentRate)) {
-                showNotification('❌ Сначала введите текущий пульс', 'error');
-                return;
-            }
-            
-            isRecording = true;
-            currentAction = action;
-            
-            // Визуальная индикация записи
-            document.querySelectorAll('.action-btn').forEach(btn => {
-                btn.classList.remove('recording');
-            });
-            
-            event.target.classList.add('recording');
-            
-            showNotification(`🎥 Запись пульса: ${getActionName(action)}`);
-            
-            // Сохраняем начальные данные
-            saveHeartRateData(currentRate, action);
-            
-            // Автоматическое завершение через 30 секунд
             setTimeout(() => {
-                stopRecording();
-            }, 30000);
+                btn.innerHTML = currentLang === 'ru' ? '🔔 Уведомить о запуске' : '🔔 Notify on launch';
+                btn.style.background = 'linear-gradient(45deg, #2196F3, #4CAF50)';
+            }, 2000);
         }
 
-        // Завершение записи
-        function stopRecording() {
-            if (!isRecording) return;
-            
-            const finalRate = parseInt(heartRateValue.textContent);
-            if (!isNaN(finalRate)) {
-                saveHeartRateData(finalRate, `${currentAction}_end`);
+        // Показать роадмап
+        function showRoadmap() {
+            showNotification(currentLang === 'ru'
+                ? '🗺️ Дорожная карта скоро будет доступна!'
+                : '🗺️ Roadmap coming soon!');
+        }
+
+        // Связаться с поддержкой
+        function contactSupport() {
+            if (currentLang === 'ru') {
+                tg.openTelegramLink('https://t.me/trademate_support');
+            } else {
+                tg.openTelegramLink('https://t.me/trademate_support_en');
             }
-            
-            isRecording = false;
-            
-            // Сброс визуальной индикации
-            document.querySelectorAll('.action-btn').forEach(btn => {
-                btn.classList.remove('recording');
-            });
-            
-            showNotification('✅ Данные сделки сохранены');
-            updateStatistics();
-            updateInsights();
-            updateSidebarStats();
         }
 
-        // Сохранение данных пульса для сделки
-        function saveHeartRateData(rate, action) {
-            const data = {
-                action: action,
-                heartRate: rate,
-                timestamp: new Date().toISOString(),
-                status: getHeartRateStatus(rate)
+        // Пасхалка
+        let easterEggClicks = 0;
+        function showEasterEgg() {
+            easterEggClicks++;
+            
+            if (easterEggClicks === 3) {
+                document.getElementById('hiddenMessage').style.display = 'block';
+                showNotification(currentLang === 'ru'
+                    ? '🎉 Вы нашли секретное сообщение!'
+                    : '🎉 You found a secret message!');
+                easterEggClicks = 0;
+            } else if (easterEggClicks === 1) {
+                showNotification(currentLang === 'ru'
+                    ? '🔍 Продолжайте искать...'
+                    : '🔍 Keep looking...');
+            } else if (easterEggClicks === 2) {
+                showNotification(currentLang === 'ru'
+                    ? '🎯 Почти нашли!'
+                    : '🎯 Almost there!');
+            }
+        }
+
+        // Закрыть сообщение
+        function closeMessage() {
+            document.getElementById('hiddenMessage').style.display = 'none';
+        }
+
+        // Социальные сети
+        function openSocial(type) {
+            const urls = {
+                tg: 'https://t.me/trademate_channel',
+                github: 'https://github.com/trademate',
+                twitter: 'https://twitter.com/trademate_app',
+                mail: 'mailto:support@trademate.app'
             };
             
-            // Сохранение в localStorage
-            let savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
-            savedData.push(data);
-            localStorage.setItem('traderBioData', JSON.stringify(savedData));
+            tg.openTelegramLink(urls[type]);
         }
 
-        // Загрузка статистики пользователя
-        function loadUserStats() {
-            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
-            
-            if (savedData.length > 0) {
-                const entryData = savedData.filter(d => d.action === 'entry');
-                const calmEntries = entryData.filter(d => d.heartRate <= 75).length;
-                
-                if (entryData.length > 0) {
-                    const avg = Math.round(entryData.reduce((sum, d) => sum + d.heartRate, 0) / entryData.length);
-                    avgHeartRate.textContent = avg;
-                } else {
-                    avgHeartRate.textContent = '--';
-                }
-                
-                if (entryData.length > 0) {
-                    const score = Math.round((calmEntries / entryData.length) * 100);
-                    disciplineScore.textContent = `${score}%`;
-                } else {
-                    disciplineScore.textContent = '--%';
-                }
-            } else {
-                avgHeartRate.textContent = '--';
-                disciplineScore.textContent = '--%';
-            }
-        }
-
-        // Обновление статистики в боковом меню
-        function updateSidebarStats() {
-            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
-            const tradingStatsContainer = document.getElementById('tradingStats');
-            const totalRecords = document.getElementById('totalRecords');
-            const overallAvgRate = document.getElementById('overallAvgRate');
-            const calmPercentage = document.getElementById('calmPercentage');
-            
-            // Общая статистика
-            totalRecords.textContent = savedData.length;
-            
-            if (savedData.length > 0) {
-                const avgRate = Math.round(savedData.reduce((sum, d) => sum + d.heartRate, 0) / savedData.length);
-                overallAvgRate.textContent = avgRate;
-                
-                const calmEntries = savedData.filter(d => d.heartRate <= 75).length;
-                const calmPercent = Math.round((calmEntries / savedData.length) * 100);
-                calmPercentage.textContent = `${calmPercent}%`;
-            } else {
-                overallAvgRate.textContent = '--';
-                calmPercentage.textContent = '--%';
-            }
-            
-            // Статистика по типам сделок
-            const actionTypes = {
-                'entry': 'Вход в сделку',
-                'exit': 'Выход из сделки',
-                'breakeven': 'Безубыток',
-                'stop_loss': 'Стоп-лосс',
-                'take_profit': 'Тейк-профит',
-                'trailing_stop': 'Трейлинг-стоп'
-            };
-            
-            // Добавляем пользовательские события
-            customEvents.forEach(event => {
-                actionTypes[`custom_${event.id}`] = event.name;
-            });
-            
-            let statsHTML = '';
-            
-            Object.keys(actionTypes).forEach(action => {
-                const actionData = savedData.filter(d => d.action === action);
-                if (actionData.length > 0) {
-                    const avgRate = Math.round(actionData.reduce((sum, d) => sum + d.heartRate, 0) / actionData.length);
-                    const minRate = Math.min(...actionData.map(d => d.heartRate));
-                    const maxRate = Math.max(...actionData.map(d => d.heartRate));
-                    
-                    statsHTML += `
-                        <div class="stat-item">
-                            <div>${actionTypes[action]}</div>
-                            <div class="stat-value">${avgRate}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">${minRate}-${maxRate}</div>
-                        </div>
-                    `;
-                }
-            });
-            
-            if (statsHTML) {
-                tradingStatsContainer.innerHTML = statsHTML;
-            } else {
-                tradingStatsContainer.innerHTML = '<div class="empty-state">Нет данных о сделках</div>';
-            }
-            
-            // Обновление списка пользовательских событий в меню
-            const customEventsList = document.getElementById('customEventsList');
-            if (customEvents.length > 0) {
-                let customHTML = '';
-                customEvents.forEach(event => {
-                    const eventData = savedData.filter(d => d.action === `custom_${event.id}`);
-                    const count = eventData.length;
-                    customHTML += `
-                        <div class="stat-item">
-                            <div>${event.name}</div>
-                            <div class="stat-value">${count}</div>
-                        </div>
-                    `;
-                });
-                customEventsList.innerHTML = customHTML;
-            } else {
-                customEventsList.innerHTML = '<div class="empty-state">Нет пользовательских событий</div>';
-            }
-        }
-
-        // Обновление статистики
-        function updateStatistics() {
-            loadUserStats();
-        }
-
-        // Обновление инсайтов (безопасная версия)
-        function updateInsights() {
-            const savedData = JSON.parse(localStorage.getItem('traderBioData') || '[]');
-            const entryData = savedData.filter(d => d.action === 'entry');
-            
-            if (entryData.length > 0) {
-                // Лучшая зона эффективности
-                const heartRates = entryData.map(d => d.heartRate);
-                const minRate = Math.min(...heartRates);
-                const maxRate = Math.max(...heartRates);
-                bestPerformanceZone.textContent = `${minRate}-${maxRate} уд/мин`;
-                
-                // Рекорд спокойствия
-                const calmEntries = entryData.filter(d => d.heartRate <= 75);
-                if (calmEntries.length > 0) {
-                    const minHeartRate = Math.min(...calmEntries.map(d => d.heartRate));
-                    calmRecord.textContent = `${minHeartRate} уд/мин`;
-                } else {
-                    calmRecord.textContent = "-- уд/мин";
-                }
-                
-                // Прогресс
-                if (entryData.length > 1) {
-                    const recentEntries = entryData.slice(-5);
-                    const calmRecent = recentEntries.filter(d => d.heartRate <= 75).length;
-                    progressScore.textContent = `${Math.round((calmRecent / recentEntries.length) * 100)}%`;
-                } else {
-                    progressScore.textContent = "--%";
-                }
-            } else {
-                bestPerformanceZone.textContent = "-- -- уд/мин";
-                calmRecord.textContent = "-- уд/мин";
-                progressScore.textContent = "--%";
-            }
-        }
-
-        // Управление данными
-        function showClearDataConfirm() {
-            document.getElementById('confirmMessage').textContent = 'Вы уверены, что хотите очистить все данные? Это действие нельзя отменить.';
-            document.getElementById('confirmModal').style.display = 'flex';
-        }
-
-        function hideConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'none';
-        }
-
-        function clearAllData() {
-            localStorage.clear();
-            heartRateData = [];
-            heartRateChart.data.labels = [];
-            heartRateChart.data.datasets[0].data = [];
-            heartRateChart.update();
-            
-            heartRateValue.textContent = '--';
-            statusBadge.textContent = 'СПОКОЙСТВИЕ';
-            statusBadge.className = 'status-badge status-calm';
-            
-            avgHeartRate.textContent = '--';
-            disciplineScore.textContent = '--%';
-            bestPerformanceZone.textContent = '-- -- уд/мин';
-            calmRecord.textContent = '-- уд/мин';
-            progressScore.textContent = '--%';
-            
-            customEvents = [];
-            updateCustomEventsUI();
-            
-            hideConfirmModal();
-            updateSidebarStats();
-            showNotification('✅ Все данные очищены');
-        }
-
-        function exportData() {
-            const data = {
-                heartRateHistory: heartRateData,
-                tradeData: JSON.parse(localStorage.getItem('traderBioData') || '[]'),
-                customEvents: customEvents,
-                exportDate: new Date().toISOString()
-            };
-            
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = 'trademate_data.json';
-            link.click();
-            
-            showNotification('📤 Данные экспортированы');
-        }
-
-        // Вспомогательные функции
-        function getActionName(action) {
-            if (action.startsWith('custom_')) {
-                const eventId = action.replace('custom_', '');
-                const customEvent = customEvents.find(e => e.id === eventId);
-                return customEvent ? customEvent.name : 'Пользовательское событие';
-            }
-            
-            const names = {
-                'entry': 'Вход в сделку',
-                'exit': 'Выход из сделки', 
-                'breakeven': 'Безубыток',
-                'stop_loss': 'Стоп-лосс',
-                'take_profit': 'Тейк-профит',
-                'trailing_stop': 'Трейлинг-стоп'
-            };
-            return names[action] || action;
-        }
-
-        function getActionEmoji(action) {
-            if (action.startsWith('custom_')) return '⭐';
-            
-            const emojis = {
-                'entry': '🟢',
-                'exit': '🔴',
-                'breakeven': '⚫',
-                'stop_loss': '💔',
-                'take_profit': '💰',
-                'trailing_stop': '📈'
-            };
-            return emojis[action] || '📊';
-        }
-
-        function getHeartRateStatus(rate) {
-            if (rate <= 75) return 'calm';
-            if (rate <= 90) return 'stress';
-            return 'panic';
-        }
-
-        function showNotification(message, type = 'normal') {
+        // Показать уведомление
+        function showNotification(message) {
+            // Создаем временное уведомление
             const notification = document.createElement('div');
-            notification.className = `notification ${type === 'warning' ? 'warning' : ''} ${type === 'error' ? 'error' : ''}`;
-            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: linear-gradient(45deg, #2196F3, #4CAF50);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 25px;
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
             
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            notification.textContent = message;
             document.body.appendChild(notification);
             
             setTimeout(() => {
-                notification.remove();
+                notification.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
 
-        // Обработка нажатия Enter в поле ввода
-        heartRateInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitHeartRate();
-            }
-        });
+        // Анимация прогресс-бара
+        function animateProgressBar() {
+            const progressFill = document.querySelector('.progress-fill');
+            let width = 75;
+            let direction = 1;
+            
+            setInterval(() => {
+                if (width >= 80) direction = -1;
+                if (width <= 70) direction = 1;
+                
+                width += direction * 0.5;
+                progressFill.style.width = width + '%';
+            }, 100);
+        }
+
+        // Случайная анимация для плавающих элементов
+        function animateFloatingElements() {
+            const elements = document.querySelectorAll('.floating-element');
+            elements.forEach(el => {
+                const randomDelay = Math.random() * 2;
+                const randomDuration = 4 + Math.random() * 4;
+                el.style.animationDelay = `${randomDelay}s`;
+                el.style.animationDuration = `${randomDuration}s`;
+            });
+        }
+
+        // Инициализация
+        function initializeApp() {
+            updateCountdown();
+            setInterval(updateCountdown, 60000); // Обновлять каждую минуту
+            animateProgressBar();
+            animateFloatingElements();
+            
+            // Случайные сообщения в уведомлении
+            const messages = currentLang === 'ru' 
+                ? [
+                    "💪 Работаем над новой функцией...",
+                    "🎨 Улучшаем дизайн...",
+                    "⚡ Оптимизируем производительность...",
+                    "🔧 Исправляем ошибки..."
+                ]
+                : [
+                    "💪 Working on new feature...",
+                    "🎨 Improving design...",
+                    "⚡ Optimizing performance...",
+                    "🔧 Fixing bugs..."
+                ];
+            
+            setInterval(() => {
+                const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                document.querySelector('.notification-badge').textContent = randomMsg;
+            }, 5000);
+        }
 
         // Запуск приложения
         initializeApp();
