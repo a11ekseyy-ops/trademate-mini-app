@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeMate - Временное обновление</title>
+    <title>TradeMate - Временно недоступно</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -17,546 +17,85 @@
             background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             color: white;
             min-height: 100vh;
-            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
         }
 
         .container {
-            max-width: 100%;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .construction-animation {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            margin-bottom: 30px;
-        }
-
-        .crane {
-            position: absolute;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 100px;
-        }
-
-        .crane-body {
-            position: absolute;
-            width: 20px;
-            height: 60px;
-            background: #ff9800;
-            border-radius: 5px;
-            top: 0;
-            left: 30px;
-        }
-
-        .crane-arm {
-            position: absolute;
-            width: 80px;
-            height: 10px;
-            background: #ff9800;
-            border-radius: 5px;
-            top: 20px;
-            left: -30px;
-            animation: craneSwing 3s ease-in-out infinite;
-            transform-origin: right center;
-        }
-
-        .crane-cable {
-            position: absolute;
-            width: 4px;
-            height: 40px;
-            background: #ff9800;
-            left: 10px;
-            top: 30px;
-            animation: cableSwing 3s ease-in-out infinite;
-        }
-
-        .crane-hook {
-            position: absolute;
-            width: 15px;
-            height: 8px;
-            background: #ff5722;
-            border-radius: 2px;
-            bottom: -5px;
-            left: 2px;
-        }
-
-        .building {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 60px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px 10px 0 0;
-            overflow: hidden;
-        }
-
-        .window {
-            position: absolute;
-            width: 15px;
-            height: 20px;
-            background: #ffeb3b;
-            border-radius: 3px;
-            animation: windowGlow 2s infinite alternate;
-        }
-
-        .window:nth-child(1) { top: 10px; left: 15px; }
-        .window:nth-child(2) { top: 10px; right: 15px; }
-        .window:nth-child(3) { bottom: 10px; left: 15px; }
-        .window:nth-child(4) { bottom: 10px; right: 15px; }
-
-        @keyframes craneSwing {
-            0%, 100% { transform: rotate(-5deg); }
-            50% { transform: rotate(5deg); }
-        }
-
-        @keyframes cableSwing {
-            0%, 100% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-        }
-
-        @keyframes windowGlow {
-            0% { opacity: 0.3; box-shadow: 0 0 5px #ffeb3b; }
-            100% { opacity: 1; box-shadow: 0 0 20px #ffeb3b; }
-        }
-
-        .main-title {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            background: linear-gradient(45deg, #4CAF50, #2196F3);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            font-size: 18px;
-            opacity: 0.9;
-            margin-bottom: 30px;
             max-width: 500px;
-            line-height: 1.5;
-        }
-
-        .status-card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            max-width: 400px;
             width: 100%;
         }
 
-        .progress-section {
-            margin: 25px 0;
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            animation: subtleFloat 3s ease-in-out infinite;
         }
 
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #2196F3);
-            border-radius: 4px;
-            width: 75%;
-            animation: progressPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes progressPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 25px 0;
-        }
-
-        .feature-card {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255,255,255,0.1);
-        }
-
-        .feature-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .feature-text {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        .countdown {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 25px 0;
-        }
-
-        .countdown-item {
-            text-align: center;
-        }
-
-        .countdown-number {
-            font-size: 28px;
-            font-weight: bold;
-            background: rgba(255,255,255,0.1);
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            margin-bottom: 5px;
-        }
-
-        .countdown-label {
-            font-size: 12px;
-            opacity: 0.7;
-            text-transform: uppercase;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin: 25px 0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border-radius: 25px;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 150px;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #2196F3, #4CAF50);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(33,150,243,0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-3px);
-        }
-
-        .notification-badge {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #ff9800;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
+        @keyframes subtleFloat {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+            50% { transform: translateY(-10px); }
         }
 
-        .easter-egg {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0.3;
-            font-size: 12px;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
+        h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
-        .easter-egg:hover {
-            opacity: 1;
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 25px;
         }
 
-        .hidden-message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 30px;
-            border-radius: 20px;
-            z-index: 1000;
-            display: none;
-            max-width: 300px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            border: 2px solid #4CAF50;
+        .divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 25px auto;
+            width: 200px;
         }
 
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
+        .english {
+            opacity: 0.7;
         }
 
-        .floating-element {
-            position: absolute;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .floating-element:nth-child(1) {
-            top: 10%;
-            left: 5%;
-            font-size: 20px;
-            animation-delay: 0s;
-        }
-
-        .floating-element:nth-child(2) {
-            top: 15%;
-            right: 10%;
-            font-size: 24px;
-            animation-delay: 1s;
-        }
-
-        .floating-element:nth-child(3) {
-            bottom: 20%;
-            left: 15%;
-            font-size: 18px;
-            animation-delay: 2s;
-        }
-
-        .floating-element:nth-child(4) {
-            bottom: 10%;
-            right: 5%;
-            font-size: 22px;
-            animation-delay: 3s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-
-        .language-switcher {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-        }
-
-        .lang-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
+        .footer {
+            margin-top: 30px;
             font-size: 14px;
-            transition: background 0.3s ease;
-        }
-
-        .lang-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .social-icon:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
-    <div class="language-switcher">
-        <button class="lang-btn" onclick="switchLanguage('ru')">🇷🇺 RU</button>
-        <button class="lang-btn" onclick="switchLanguage('en')">🇺🇸 EN</button>
-    </div>
-
-    <div class="notification-badge">🚧 Обновление в процессе</div>
-
-    <div class="floating-element">💡</div>
-    <div class="floating-element">⚡</div>
-    <div class="floating-element">🎯</div>
-    <div class="floating-element">📈</div>
-
     <div class="container">
-        <div class="construction-animation">
-            <div class="crane">
-                <div class="crane-body"></div>
-                <div class="crane-arm"></div>
-                <div class="crane-cable">
-                    <div class="crane-hook"></div>
-                </div>
-            </div>
-            <div class="building">
-                <div class="window"></div>
-                <div class="window"></div>
-                <div class="window"></div>
-                <div class="window"></div>
+        <div class="icon">🔧</div>
+        
+        <h1>Приложение временно недоступно</h1>
+        
+        <div class="message">
+            В настоящее время ведутся технические работы по улучшению сервиса.<br>
+            Приложение скоро будет доступно в обновлённой версии.
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="english">
+            <h1>App temporarily unavailable</h1>
+            <div class="message">
+                Technical improvements are currently in progress.<br>
+                The app will be available soon in an updated version.
             </div>
         </div>
-
-        <h1 class="main-title" id="mainTitle">🚧 Приложение на обновлении</h1>
-        <p class="subtitle" id="subtitle">
-            Мы активно работаем над улучшением TradeMate. В новой версии вас ждут:
-            расширенная аналитика пульса, интеграция с Apple Watch и многое другое!
-        </p>
-
-        <div class="status-card">
-            <h2 id="statusTitle">📊 Статус разработки</h2>
-            
-            <div class="progress-section">
-                <div class="progress-label">
-                    <span id="progressText">Обновление системы отслеживания</span>
-                    <span>75%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <span class="feature-icon">💓</span>
-                    <div class="feature-text" id="feature1">Точный мониторинг пульса</div>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">📊</span>
-                    <div class="feature-text" id="feature2">Расширенная аналитика</div>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">⌚</span>
-                    <div class="feature-text" id="feature3">Интеграция с часами</div>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">🤖</span>
-                    <div class="feature-text" id="feature4">AI-рекомендации</div>
-                </div>
-            </div>
-
-            <div class="countdown">
-                <div class="countdown-item">
-                    <div class="countdown-number" id="days">07</div>
-                    <div class="countdown-label" id="daysLabel">дней</div>
-                </div>
-                <div class="countdown-item">
-                    <div class="countdown-number" id="hours">14</div>
-                    <div class="countdown-label" id="hoursLabel">часов</div>
-                </div>
-                <div class="countdown-item">
-                    <div class="countdown-number" id="minutes">32</div>
-                    <div class="countdown-label" id="minutesLabel">минут</div>
-                </div>
-            </div>
-
-            <p style="font-size: 14px; opacity: 0.7; margin-top: 20px;" id="estimatedTime">
-                Примерное время запуска: 1 февраля 2024
-            </p>
+        
+        <div class="footer">
+            TradeMate © 2024
         </div>
-
-        <div class="action-buttons">
-            <button class="btn btn-primary" onclick="notifyMe()">
-                🔔 Уведомить о запуске
-            </button>
-            <button class="btn btn-secondary" onclick="showRoadmap()">
-                🗺️ Посмотреть план
-            </button>
-            <button class="btn btn-secondary" onclick="contactSupport()">
-                💬 Связаться с поддержкой
-            </button>
-        </div>
-
-        <div class="social-links">
-            <div class="social-icon" onclick="openSocial('tg')">📱</div>
-            <div class="social-icon" onclick="openSocial('github')">💻</div>
-            <div class="social-icon" onclick="openSocial('twitter')">🐦</div>
-            <div class="social-icon" onclick="openSocial('mail')">✉️</div>
-        </div>
-
-        <div class="easter-egg" onclick="showEasterEgg()">
-            Нашли пасхалку? Кликните сюда!
-        </div>
-    </div>
-
-    <!-- Скрытое сообщение -->
-    <div class="hidden-message" id="hiddenMessage">
-        <button class="close-btn" onclick="closeMessage()">×</button>
-        <h3 style="color: #4CAF50; margin-bottom: 15px;">🎉 Секретная находка!</h3>
-        <p id="secretText">Спасибо, что заглянули сюда! Вы одни из первых, кто увидит новую версию TradeMate.</p>
-        <p style="margin-top: 15px; font-size: 14px; opacity: 0.7;">Ваш секретный код: <strong>TRADEMATE2024</strong></p>
     </div>
 
     <script>
@@ -564,260 +103,6 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
-
-        // Тексты для перевода
-        const texts = {
-            ru: {
-                mainTitle: "🚧 Приложение на обновлении",
-                subtitle: "Мы активно работаем над улучшением TradeMate. В новой версии вас ждут: расширенная аналитика пульса, интеграция с Apple Watch и многое другое!",
-                statusTitle: "📊 Статус разработки",
-                progressText: "Обновление системы отслеживания",
-                feature1: "Точный мониторинг пульса",
-                feature2: "Расширенная аналитика",
-                feature3: "Интеграция с часами",
-                feature4: "AI-рекомендации",
-                daysLabel: "дней",
-                hoursLabel: "часов",
-                minutesLabel: "минут",
-                estimatedTime: "Примерное время запуска: 1 февраля 2024",
-                notifyMe: "🔔 Уведомить о запуске",
-                showRoadmap: "🗺️ Посмотреть план",
-                contactSupport: "💬 Связаться с поддержкой",
-                secretText: "Спасибо, что заглянули сюда! Вы одни из первых, кто увидит новую версию TradeMate."
-            },
-            en: {
-                mainTitle: "🚧 App Under Maintenance",
-                subtitle: "We're actively working on improving TradeMate. The new version will feature: advanced pulse analytics, Apple Watch integration, and much more!",
-                statusTitle: "📊 Development Status",
-                progressText: "Updating tracking system",
-                feature1: "Accurate pulse monitoring",
-                feature2: "Advanced analytics",
-                feature3: "Watch integration",
-                feature4: "AI recommendations",
-                daysLabel: "days",
-                hoursLabel: "hours",
-                minutesLabel: "minutes",
-                estimatedTime: "Estimated launch: February 1, 2024",
-                notifyMe: "🔔 Notify on launch",
-                showRoadmap: "🗺️ View roadmap",
-                contactSupport: "💬 Contact support",
-                secretText: "Thanks for checking this out! You're among the first to see the new version of TradeMate."
-            }
-        };
-
-        // Текущий язык
-        let currentLang = 'ru';
-
-        // Переключение языка
-        function switchLanguage(lang) {
-            currentLang = lang;
-            updateTexts();
-        }
-
-        // Обновление текстов
-        function updateTexts() {
-            const langTexts = texts[currentLang];
-            
-            document.getElementById('mainTitle').textContent = langTexts.mainTitle;
-            document.getElementById('subtitle').textContent = langTexts.subtitle;
-            document.getElementById('statusTitle').textContent = langTexts.statusTitle;
-            document.getElementById('progressText').textContent = langTexts.progressText;
-            document.getElementById('feature1').textContent = langTexts.feature1;
-            document.getElementById('feature2').textContent = langTexts.feature2;
-            document.getElementById('feature3').textContent = langTexts.feature3;
-            document.getElementById('feature4').textContent = langTexts.feature4;
-            document.getElementById('daysLabel').textContent = langTexts.daysLabel;
-            document.getElementById('hoursLabel').textContent = langTexts.hoursLabel;
-            document.getElementById('minutesLabel').textContent = langTexts.minutesLabel;
-            document.getElementById('estimatedTime').textContent = langTexts.estimatedTime;
-            document.getElementById('secretText').textContent = langTexts.secretText;
-            
-            // Обновление кнопок
-            const buttons = document.querySelectorAll('.btn');
-            buttons[0].innerHTML = langTexts.notifyMe;
-            buttons[1].innerHTML = langTexts.showRoadmap;
-            buttons[2].innerHTML = langTexts.contactSupport;
-        }
-
-        // Обратный отсчет
-        function updateCountdown() {
-            const targetDate = new Date('2024-02-01T00:00:00').getTime();
-            const now = new Date().getTime();
-            const difference = targetDate - now;
-
-            if (difference > 0) {
-                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-
-                document.getElementById('days').textContent = days.toString().padStart(2, '0');
-                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-            }
-        }
-
-        // Уведомить о запуске
-        function notifyMe() {
-            showNotification(currentLang === 'ru' 
-                ? '✅ Вы будете уведомлены о запуске!' 
-                : '✅ You will be notified on launch!');
-            
-            // Анимация кнопки
-            const btn = event.target;
-            btn.innerHTML = currentLang === 'ru' ? '🎉 Отлично!' : '🎉 Great!';
-            btn.style.background = 'linear-gradient(45deg, #4CAF50, #8BC34A)';
-            
-            setTimeout(() => {
-                btn.innerHTML = currentLang === 'ru' ? '🔔 Уведомить о запуске' : '🔔 Notify on launch';
-                btn.style.background = 'linear-gradient(45deg, #2196F3, #4CAF50)';
-            }, 2000);
-        }
-
-        // Показать роадмап
-        function showRoadmap() {
-            showNotification(currentLang === 'ru'
-                ? '🗺️ Дорожная карта скоро будет доступна!'
-                : '🗺️ Roadmap coming soon!');
-        }
-
-        // Связаться с поддержкой
-        function contactSupport() {
-            if (currentLang === 'ru') {
-                tg.openTelegramLink('https://t.me/trademate_support');
-            } else {
-                tg.openTelegramLink('https://t.me/trademate_support_en');
-            }
-        }
-
-        // Пасхалка
-        let easterEggClicks = 0;
-        function showEasterEgg() {
-            easterEggClicks++;
-            
-            if (easterEggClicks === 3) {
-                document.getElementById('hiddenMessage').style.display = 'block';
-                showNotification(currentLang === 'ru'
-                    ? '🎉 Вы нашли секретное сообщение!'
-                    : '🎉 You found a secret message!');
-                easterEggClicks = 0;
-            } else if (easterEggClicks === 1) {
-                showNotification(currentLang === 'ru'
-                    ? '🔍 Продолжайте искать...'
-                    : '🔍 Keep looking...');
-            } else if (easterEggClicks === 2) {
-                showNotification(currentLang === 'ru'
-                    ? '🎯 Почти нашли!'
-                    : '🎯 Almost there!');
-            }
-        }
-
-        // Закрыть сообщение
-        function closeMessage() {
-            document.getElementById('hiddenMessage').style.display = 'none';
-        }
-
-        // Социальные сети
-        function openSocial(type) {
-            const urls = {
-                tg: 'https://t.me/trademate_channel',
-                github: 'https://github.com/trademate',
-                twitter: 'https://twitter.com/trademate_app',
-                mail: 'mailto:support@trademate.app'
-            };
-            
-            tg.openTelegramLink(urls[type]);
-        }
-
-        // Показать уведомление
-        function showNotification(message) {
-            // Создаем временное уведомление
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                background: linear-gradient(45deg, #2196F3, #4CAF50);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 25px;
-                z-index: 1001;
-                animation: slideIn 0.3s ease;
-            `;
-            
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease forwards';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        // Анимация прогресс-бара
-        function animateProgressBar() {
-            const progressFill = document.querySelector('.progress-fill');
-            let width = 75;
-            let direction = 1;
-            
-            setInterval(() => {
-                if (width >= 80) direction = -1;
-                if (width <= 70) direction = 1;
-                
-                width += direction * 0.5;
-                progressFill.style.width = width + '%';
-            }, 100);
-        }
-
-        // Случайная анимация для плавающих элементов
-        function animateFloatingElements() {
-            const elements = document.querySelectorAll('.floating-element');
-            elements.forEach(el => {
-                const randomDelay = Math.random() * 2;
-                const randomDuration = 4 + Math.random() * 4;
-                el.style.animationDelay = `${randomDelay}s`;
-                el.style.animationDuration = `${randomDuration}s`;
-            });
-        }
-
-        // Инициализация
-        function initializeApp() {
-            updateCountdown();
-            setInterval(updateCountdown, 60000); // Обновлять каждую минуту
-            animateProgressBar();
-            animateFloatingElements();
-            
-            // Случайные сообщения в уведомлении
-            const messages = currentLang === 'ru' 
-                ? [
-                    "💪 Работаем над новой функцией...",
-                    "🎨 Улучшаем дизайн...",
-                    "⚡ Оптимизируем производительность...",
-                    "🔧 Исправляем ошибки..."
-                ]
-                : [
-                    "💪 Working on new feature...",
-                    "🎨 Improving design...",
-                    "⚡ Optimizing performance...",
-                    "🔧 Fixing bugs..."
-                ];
-            
-            setInterval(() => {
-                const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-                document.querySelector('.notification-badge').textContent = randomMsg;
-            }, 5000);
-        }
-
-        // Запуск приложения
-        initializeApp();
     </script>
 </body>
 </html>
